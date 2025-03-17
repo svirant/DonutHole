@@ -64,7 +64,12 @@ There are plenty of options for PCB manufacturing but I prefer [JLCPCB](https://
 
 
 # Programming an Arduino Nano
-I recommend the [Official Arduino IDE and guide](https://www.arduino.cc/en/Guide) if you're unfamiliar with Arduinos. All .ino files used for programming are listed above. 
+I recommend the [Official Arduino IDE and guide](https://www.arduino.cc/en/Guide) if you're unfamiliar with Arduinos. All .ino files used for programming are listed above. The following Library will also need to be added in order to Compile successfully.<br />
+- **Libraries:**
+  - <AltSoftSerial.h>  Follow these steps to add AltSoftSerial.h
+    - Goto https://github.com/PaulStoffregen/AltSoftSerial
+    - Click the GREEN "<> Code" box and "Download ZIP"
+    - In Arudino IDE; goto "Sketch" -> "Include Library" -> "Add .ZIP Library"
 
 Some Arduino Nanos come with an Old Bootloader and won't Upload unless specified. **If you get errors** when trying to upload, swap to this option as a possible fix.
 
