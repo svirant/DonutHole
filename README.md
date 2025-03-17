@@ -1,6 +1,6 @@
-# DonutHole
+# Donut Hole
 
-**mini version of the [Donut Dongle](https://github.com/svirant/DonutDongle) that enables auto profiles for RS-232 devices, such as Extron switches, TESmart 16x1 and MT-Viki HDMI switches for the RetroTink 4K Pro/CE**
+**mini version of the [Donut Dongle](https://github.com/svirant/DonutDongle) that enables auto profiles for RS-232 based switches for the RetroTink 4K Pro/CE**
 
 <img width="700" src="./images/1.JPG" />
 <br />
