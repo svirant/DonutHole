@@ -27,15 +27,13 @@
 */
 
 
-uint16_t const offset = 0; // Only needed for multiple Donut Dongles (DD). Set offset so 2nd,3rd,etc boards don't overlap SVS profiles. (e.g. offset = 300;) 
-                      // MUST use SVS=1 on additional DDs. If using the IR receiver, recommended to have it only connected to the DD with lowest offset.
+uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
-
-bool S0 = false;        // (Profile 0) 
+bool S0 = false;         // (Profile 0) 
                          //
-                         //  ** Recommended to leave this option "false" if using in tandem with the Scalable Video Switch. **
+                         //  ** Recommended to leave this option "false" if using in tandem with other Serial devices. **
                          //
-                         // If set to "true", "S0_<user definted>.rt4" will load when all ports are in-active on 1st Extron switch (and 2nd if connected). 
+                         // If set to "true", "S0_<user definted>.rt4" will load when all inputs are in-active on SW1 (and SW2 if connected). 
 
                        
 
