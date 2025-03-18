@@ -10,8 +10,8 @@
 (current list, but not limited to)
 | **Switch**    | Supported | Notes |
 | ------------- | ------------- |------------- |
-| MT-VIKI 8 port HDMI | yes, confirmed first hand. Auto-switching Profiles work and RT4K remote can also change inputs and profiles w/ AUX8 + profile button 1 - 8.  | Front case buttons and included IR remote do not generate serial output on the switch itself therefor profile changes can't happen for these 2 other methods.  |
-| TESmart 16x1 HDMI  | yes, confirmed first hand  ||
+| TESmart 16x1 HDMI  | yes, confirmed first hand  | |
+| MT-VIKI 8 port HDMI | yes, confirmed first hand | Manual selection of inputs via front case buttons and included IR remote do not generate serial output on the switch itself therefor profile changes can't happen for these 2 methods. Auto selection works fine. |
 | Extron RGBHV sw6  | yes, confirmed first hand  | |
 | Extron DXP 88 | yes, confirmed first hand | Preset 1 is Profile/SVS 1. On Extron sw2 port Preset 1 is SVS 101, etc|
 | Extron CrossPoint, MVX, etc | if it supports SIS, should work fine, please let me know :) |
