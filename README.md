@@ -2,8 +2,15 @@
 
 **mini version of the [Donut Dongle](https://github.com/svirant/DonutDongle) that enables auto profiles for RS-232 based switches for the RetroTink 4K Pro/CE**
 
-<img width="700" src="./images/1.JPG" />
+ - Compatible with the SVS
+ - Connect multiple Donut Holes, Donut Dongles, gSerial Enablers simultaneously via a headphone jack splitter.
+   - Must reflash "firmware" with offset variable set so SVS profile numbers don't overlap.
+   - Up to 5 have been connected together simultaneously. More may be supported, but this is the max number I've been able to test.
+ - Full instructions listed below for building your own!
+ - If DIY is not your thing, I also have a handful assembled and available for purchase on [Ko-fi](https://ko-fi.com/donutswdad/shop)
+
 <br />
+<img width="700" src="./images/1.JPG" />
 <br />
 
 # Supported Switches
