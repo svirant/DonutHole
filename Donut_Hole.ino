@@ -224,33 +224,36 @@ void readExtron1(){
     }
 
     // for TESmart / MT-VIKI HDMI switch on SW1
-    if(ecapbytes[4] == 17 || ecapbytes[4] == 95){
-      if(ecapbytes[6] == 22 || ecapbytes[11] == 48){
+    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecapbytes[4] == 95){
+      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48){
         sendSVS(1);
       }
-      else if(ecapbytes[6] == 23 || ecapbytes[11] == 49){
+      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49){
         sendSVS(2);
       }
-      else if(ecapbytes[6] == 24 || ecapbytes[11] == 50){
+      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50){
         sendSVS(3);
       }
-      else if(ecapbytes[6] == 25 || ecapbytes[11] == 51){
+      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51){
         sendSVS(4);
       }
-      else if(ecapbytes[6] == 26 || ecapbytes[11] == 52){
+      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52){
         sendSVS(5);
       }
-      else if(ecapbytes[6] == 27 || ecapbytes[11] == 53){
+      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53){
         sendSVS(6);
       }
-      else if(ecapbytes[6] == 28 || ecapbytes[11] == 54){
+      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54){
         sendSVS(7);
       }
-      else if(ecapbytes[6] == 29 || ecapbytes[11] == 55){
+      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55){
         sendSVS(8);
       }
       else if(ecapbytes[6] > 29 && ecapbytes[6] < 38){
         sendSVS(ecapbytes[6] - 21);
+      }
+      else if(ecapbytes[5] > 29 && ecapbytes[5] < 38){
+        sendSVS(ecapbytes[5] - 21);
       }
     }
 
@@ -334,33 +337,36 @@ void readExtron2(){
 
 
     // for TESmart / MT-VIKI HDMI switch on SW2
-    if(ecapbytes[4] == 17 || ecapbytes[4] == 95){
-      if(ecapbytes[6] == 22 || ecapbytes[11] == 48){
+    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecapbytes[4] == 95){
+      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48){
         sendSVS(101);
       }
-      else if(ecapbytes[6] == 23 || ecapbytes[11] == 49){
+      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49){
         sendSVS(102);
       }
-      else if(ecapbytes[6] == 24 || ecapbytes[11] == 50){
+      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50){
         sendSVS(103);
       }
-      else if(ecapbytes[6] == 25 || ecapbytes[11] == 51){
+      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51){
         sendSVS(104);
       }
-      else if(ecapbytes[6] == 26 || ecapbytes[11] == 52){
+      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52){
         sendSVS(105);
       }
-      else if(ecapbytes[6] == 27 || ecapbytes[11] == 53){
+      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53){
         sendSVS(106);
       }
-      else if(ecapbytes[6] == 28 || ecapbytes[11] == 54){
+      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54){
         sendSVS(107);
       }
-      else if(ecapbytes[6] == 29 || ecapbytes[11] == 55){
+      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55){
         sendSVS(108);
       }
       else if(ecapbytes[6] > 29 && ecapbytes[6] < 38){
         sendSVS(ecapbytes[6] + 79);
+      }
+      else if(ecapbytes[5] > 29 && ecapbytes[5] < 38){
+        sendSVS(ecapbytes[5] + 79);
       }
     }
 
