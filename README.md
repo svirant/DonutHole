@@ -1,7 +1,7 @@
 # Donut Hole
 
 **mini version of the [Donut Dongle](https://github.com/svirant/DonutDongle) that enables auto profiles for RS-232 based switches for the RetroTink 4K Pro/CE**
-
+ - 3DP case now available on [MakerWorld](https://makerworld.com/en/models/1433467-donut-hole-for-retrotink-4k?from=search#profileId-1490991)
  - Compatible with the SVS
  - Connect multiple Donut Holes, Donut Dongles, gSerial Enablers simultaneously via a headphone jack splitter.
    - Must reflash "firmware" with offset variable set so SVS profile numbers don't overlap.
