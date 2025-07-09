@@ -30,6 +30,7 @@ PCBs for this project:
  - [Donut Hole](https://github.com/svirant/DonutHole/blob/main/Donut_Hole.zip)
  - [VGA Adapter](https://github.com/svirant/DonutDongle/tree/main/Adapters) (VGAPassthrough or YC2VGA)
 - (Optional) [TESmart_connector](https://github.com/svirant/DonutDongle/tree/main/Accessories)
+- (Optional) [MT-VIKI / Extron / DB9 adapter](https://github.com/svirant/DonutDongle/tree/main/Accessories)
  
 There are plenty of options for PCB manufacturing but I prefer [JLCPCB](https://jlcpcb.com) (No affiliation). Using the gerber (.zip) files provided, it's easy to place an order. Below are some tips/guidelines:
 - 1.6mm Thickness
