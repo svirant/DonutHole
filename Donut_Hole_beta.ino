@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.3b
+* Donut Hole v0.3c
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,11 +26,14 @@
 //////////////////
 */
 
-uint8_t debugE1CAP = 0; // line ~185
-uint8_t debugE2CAP = 0; // line ~318
+uint8_t debugE1CAP = 0; // line ~189
+uint8_t debugE2CAP = 0; // line ~325
 
 bool automatrixSW1 = true; // enable for auto switching on "SW1" port
 bool automatrixSW2 = false; // enable for auto switching on "SW2" port
+
+int amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. 8,12,16,32 "should" work
+int amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. 8,12,16,32 ...
 
 int automatrixOutputPortSW1 = 1; // set to the output port on "SW1" connected to the RT4K
 int automatrixOutputPortSW2 = 1; // set to the output port on "SW2" connected to the RT4K
@@ -129,8 +132,9 @@ AltSoftSerial extronSerial2; // setup yet another serial port for listening to S
 // Extron Global variables
 String previnput[2] = {"discon","discon"}; // used to keep track of previous input
 uint8_t eoutput[2]; // used to store Extron output
-String stack1 = "00000000"; 
-String stack2 = "00000000"; 
+String const sstack = "00000000000000000000000000000000"; // static stack of 32 "0" for comparisons
+String stack1 = "00000000000000000000000000000000"; 
+String stack2 = "00000000000000000000000000000000"; 
 int currentInputSW1 = -1;
 int currentInputSW2 = -1;
 
@@ -170,9 +174,9 @@ void loop(){
 
 void readExtron1(){
 
-    byte ecapbytes[20]; // used to store first 13 captured bytes / messages for Extron                
-    String ecap = ""; // used to store Extron status messages for Extron in String format
-    String einput = "00000000"; // used to store Extron input
+    byte ecapbytes[44]; // used to store first 44 captured bytes / messages for Extron                
+    String ecap = "0000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
+    String einput = "0000000000000000000000000000000000000000"; // used to store Extron input
 
     if(automatrixSW1){ // if automatrixSW1 is set "true" in options, then "LS0" is sent every 250ms to see if an input has changed
       LS0time1(250);
@@ -181,10 +185,10 @@ void readExtron1(){
     // listens to the Extron sw1 Port for changes
     // SIS Command Responses reference - Page 77 https://media.extron.com/public/download/files/userman/XP300_Matrix_B.pdf
     if(extronSerial.available() > 0){ // if there is data available for reading, read
-      extronSerial.readBytes(ecapbytes,20); // read in and store only the first 13 bytes for every status message received from 1st Extron SW port
+      extronSerial.readBytes(ecapbytes,44); // read in and store only the first 13 bytes for every status message received from 1st Extron SW port
       if(debugE1CAP){
         Serial.print(F("ecap HEX: "));
-        for(int i=0;i<20;i++){
+        for(int i=0;i<44;i++){
           Serial.print(ecapbytes[i],HEX);Serial.print(F(" "));
         }
         Serial.println(F("\r"));
@@ -209,10 +213,10 @@ void readExtron1(){
     }
     else if(ecap.substring(0,3) == "In0" && automatrixSW1){
       if(ecap.substring(0,4) == "In00"){
-        einput = ecap.substring(5,13);
+        einput = ecap.substring(5,amSizeSW1 + 5);
       }else 
-        einput = ecap.substring(4,12);
-      for(int i=0;i<8;i++){
+        einput = ecap.substring(4,amSizeSW1 + 4);
+      for(int i=0;i<amSizeSW1;i++){
         if(einput[i] != stack1[i] || einput[currentInputSW1 - 1] == '0'){
           stack1[i] = einput[i];
           if(einput[i] != '0'){
@@ -222,7 +226,7 @@ void readExtron1(){
           }
         }
       } //end of for loop
-      if(einput == "00000000" && stack1 == "00000000" && currentInputSW1 != 0){
+      if(einput.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) && stack1.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) && currentInputSW1 != 0){
         currentInputSW1 = 0;
         if(S0)sendSVS(currentInputSW1);
       }
@@ -307,9 +311,9 @@ void readExtron1(){
 
 void readExtron2(){
     
-    byte ecapbytes[20]; // used to store first 13 captured bytes / messages for Extron                
-    String ecap = ""; // used to store Extron status messages for Extron in String format
-    String einput = "00000000"; // used to store Extron input
+    byte ecapbytes[44]; // used to store first 44 captured bytes / messages for Extron                
+    String ecap = "0000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
+    String einput = "0000000000000000000000000000000000000000"; // used to store Extron input
 
     if(automatrixSW2){ // if automatrixSW2 is set "true" in options, then "LS0" is sent every 250ms to see if an input has changed
       LS0time2(250);
@@ -317,10 +321,10 @@ void readExtron2(){
 
     // listens to the Extron sw2 Port for changes
     if(extronSerial2.available() > 0){ // if there is data available for reading, read
-      extronSerial2.readBytes(ecapbytes,20); // read in and store only the first 13 bytes for every status message received from 2nd Extron port
+      extronSerial2.readBytes(ecapbytes,44); // read in and store only the first 13 bytes for every status message received from 2nd Extron port
       if(debugE2CAP){
         Serial.print(F("ecap2 HEX: "));
-        for(int i=0;i<20;i++){
+        for(int i=0;i<44;i++){
           Serial.print(ecapbytes[i],HEX);Serial.print(F(" "));
         }
         Serial.println(F("\r"));
@@ -344,10 +348,10 @@ void readExtron2(){
     }
     else if(ecap.substring(0,3) == "In0" && automatrixSW2){
       if(ecap.substring(0,4) == "In00"){
-        einput = ecap.substring(5,13);
+        einput = ecap.substring(5,amSizeSW2 + 5);
       }else 
-        einput = ecap.substring(4,12);
-      for(int i=0;i<8;i++){
+        einput = ecap.substring(4,amSizeSW2 + 4);
+      for(int i=0;i<amSizeSW2;i++){
         if(einput[i] != stack2[i] || einput[currentInputSW2 - 1] == '0'){
           stack2[i] = einput[i];
           if(einput[i] != '0'){
@@ -357,7 +361,7 @@ void readExtron2(){
           }
         }
       } //end of for loop
-      if(einput == "00000000" && stack2 == "00000000" && currentInputSW2 != 0){
+      if(einput.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && stack1.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && currentInputSW2 != 0){
         currentInputSW2 = 0;
         if(S0)sendSVS(currentInputSW2);
       }
@@ -476,7 +480,7 @@ void LS0time1(unsigned long eTime){
     prevTime = 0;
     extronSerial.print("0LS");
     //extronSerial.write(ZEROLS,5);
-    delay(10);
+    delay(20);
  }
 }  // end of LS0time1()
 
@@ -489,6 +493,6 @@ void LS0time2(unsigned long eTime){
     prevTime2 = 0;
     extronSerial2.print("0LS");
     //extronSerial.write(ZEROLS,5);
-    delay(10);
+    delay(20);
  }
 }  // end of LS0time2()
