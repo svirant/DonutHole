@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.3a
+* Donut Hole v0.3b
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 //////////////////
 */
 
-uint8_t debugE1CAP = 0; // line ~163
-uint8_t debugE2CAP = 0; // line ~272
+uint8_t debugE1CAP = 0; // line ~185
+uint8_t debugE2CAP = 0; // line ~318
 
 bool automatrixSW1 = true; // enable for auto switching on "SW1" port
 bool automatrixSW2 = false; // enable for auto switching on "SW2" port
@@ -184,7 +184,7 @@ void readExtron1(){
       extronSerial.readBytes(ecapbytes,20); // read in and store only the first 13 bytes for every status message received from 1st Extron SW port
       if(debugE1CAP){
         Serial.print(F("ecap HEX: "));
-        for(int i=0;i<13;i++){
+        for(int i=0;i<20;i++){
           Serial.print(ecapbytes[i],HEX);Serial.print(F(" "));
         }
         Serial.println(F("\r"));
@@ -208,7 +208,10 @@ void readExtron1(){
       eoutput[0] = 0;
     }
     else if(ecap.substring(0,3) == "In0" && automatrixSW1){
-      einput = ecap.substring(4,12);
+      if(ecap.substring(0,4) == "In00"){
+        einput = ecap.substring(5,13);
+      }else 
+        einput = ecap.substring(4,12);
       for(int i=0;i<8;i++){
         if(einput[i] != stack1[i] || einput[currentInputSW1 - 1] == '0'){
           stack1[i] = einput[i];
@@ -317,7 +320,7 @@ void readExtron2(){
       extronSerial2.readBytes(ecapbytes,20); // read in and store only the first 13 bytes for every status message received from 2nd Extron port
       if(debugE2CAP){
         Serial.print(F("ecap2 HEX: "));
-        for(int i=0;i<13;i++){
+        for(int i=0;i<20;i++){
           Serial.print(ecapbytes[i],HEX);Serial.print(F(" "));
         }
         Serial.println(F("\r"));
@@ -340,7 +343,10 @@ void readExtron2(){
       eoutput[1] = 0;
     }
     else if(ecap.substring(0,3) == "In0" && automatrixSW2){
-      einput = ecap.substring(4,12);
+      if(ecap.substring(0,4) == "In00"){
+        einput = ecap.substring(5,13);
+      }else 
+        einput = ecap.substring(4,12);
       for(int i=0;i<8;i++){
         if(einput[i] != stack2[i] || einput[currentInputSW2 - 1] == '0'){
           stack2[i] = einput[i];
