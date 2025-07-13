@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.3
+* Donut Hole v0.3a
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -136,6 +136,10 @@ int currentInputSW2 = -1;
 
 byte ZEROLS[5] = {0x57,0x7C,0x30,0x4C,0x53};
 byte VERB[5] = {0x57,0x33,0x43,0x56,0x7C};
+unsigned long currentTime = 0;
+unsigned long currentTime2 = 0;
+unsigned long prevTime = 0;
+unsigned long prevTime2 = 0;
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -170,9 +174,8 @@ void readExtron1(){
     String ecap = ""; // used to store Extron status messages for Extron in String format
     String einput = "00000000"; // used to store Extron input
 
-    if(automatrixSW1){
-      extronSerial.write(ZEROLS,5); // sends "0LS" command to query input ports for signal
-      delay(500);
+    if(automatrixSW1){ // if automatrixSW1 is set "true" in options, then "LS0" is sent every 250ms to see if an input has changed
+      LS0time1(250);
     }
 
     // listens to the Extron sw1 Port for changes
@@ -305,14 +308,13 @@ void readExtron2(){
     String ecap = ""; // used to store Extron status messages for Extron in String format
     String einput = "00000000"; // used to store Extron input
 
-    if(automatrixSW2){
-      extronSerial2.write(ZEROLS,5); // sends "0LS" command to query input ports for signal
-      delay(250);
+    if(automatrixSW2){ // if automatrixSW2 is set "true" in options, then "LS0" is sent every 250ms to see if an input has changed
+      LS0time2(250);
     }
 
     // listens to the Extron sw2 Port for changes
     if(extronSerial2.available() > 0){ // if there is data available for reading, read
-    extronSerial2.readBytes(ecapbytes,20); // read in and store only the first 13 bytes for every status message received from 2nd Extron port
+      extronSerial2.readBytes(ecapbytes,20); // read in and store only the first 13 bytes for every status message received from 2nd Extron port
       if(debugE2CAP){
         Serial.print(F("ecap2 HEX: "));
         for(int i=0;i<13;i++){
@@ -458,3 +460,29 @@ void setTie(int sw,uint16_t num){
     extronSerial2.println(F("!"));    
   }
 }
+
+void LS0time1(unsigned long eTime){
+  currentTime = millis();  // Init timer
+  if(prevTime == 0)       // If previous timer not initialized, do so now.
+    prevTime = millis();
+  if((currentTime - prevTime) >= eTime){ // If it's been longer than eTime, send "0LS" and reset the timer.
+    currentTime = 0;
+    prevTime = 0;
+    extronSerial.print("0LS");
+    //extronSerial.write(ZEROLS,5);
+    delay(10);
+ }
+}  // end of LS0time1()
+
+void LS0time2(unsigned long eTime){
+  currentTime2 = millis();  // Init timer
+  if(prevTime2 == 0)       // If previous timer not initialized, do so now.
+    prevTime2 = millis();
+  if((currentTime2 - prevTime2) >= eTime){ // If it's been longer than eTime, send "0LS" and reset the timer.
+    currentTime2 = 0;
+    prevTime2 = 0;
+    extronSerial2.print("0LS");
+    //extronSerial.write(ZEROLS,5);
+    delay(10);
+ }
+}  // end of LS0time2()
