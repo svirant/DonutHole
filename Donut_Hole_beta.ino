@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.3c
+* Donut Hole v0.3d
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,10 @@
 //////////////////
 */
 
-uint8_t debugE1CAP = 0; // line ~189
-uint8_t debugE2CAP = 0; // line ~325
+uint8_t debugE1CAP = 0; // line ~193
+uint8_t debugE2CAP = 0; // line ~337
+
+// For Extron Matrix switches that support DSVP. RGBS and HDMI/DVI video types.
 
 bool automatrixSW1 = true; // enable for auto switching on "SW1" port
 bool automatrixSW2 = false; // enable for auto switching on "SW2" port
@@ -132,15 +134,17 @@ AltSoftSerial extronSerial2; // setup yet another serial port for listening to S
 // Extron Global variables
 String previnput[2] = {"discon","discon"}; // used to keep track of previous input
 uint8_t eoutput[2]; // used to store Extron output
-String const sstack = "00000000000000000000000000000000"; // static stack of 32 "0" for comparisons
+String const sstack = "00000000000000000000000000000000"; // static stack of 32 "0" used for comparisons
 String stack1 = "00000000000000000000000000000000"; 
 String stack2 = "00000000000000000000000000000000"; 
 int currentInputSW1 = -1;
 int currentInputSW2 = -1;
 
-byte ZEROLS[5] = {0x57,0x7C,0x30,0x4C,0x53};
-byte VERB[5] = {0x57,0x33,0x43,0x56,0x7C};
-unsigned long currentTime = 0;
+byte ZEROLS[5] = {0x57,0x7C,0x30,0x4C,0x53}; // hex version of "W|0LS"
+byte VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
+
+// variables used for LS Time funcions
+unsigned long currentTime = 0; 
 unsigned long currentTime2 = 0;
 unsigned long prevTime = 0;
 unsigned long prevTime2 = 0;
@@ -226,9 +230,17 @@ void readExtron1(){
           }
         }
       } //end of for loop
-      if(einput.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) && stack1.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) && currentInputSW1 != 0){
+      if(einput.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) 
+        && stack1.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) && currentInputSW1 != 0){
+
         currentInputSW1 = 0;
-        if(S0)sendSVS(currentInputSW1);
+
+        if(S0 && (!automatrixSW2 && (previnput[1] == "0" || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) 
+              && voutMatrix[eoutput[0]] && (!automatrixSW2 && (previnput[1] == "discon" || voutMatrix[eoutput[1]+32]))){
+            
+          sendSVS(currentInputSW1);
+        }
+
       }
     } // end of automatrix
     else{                             // less complex switches only report input status, no output status
@@ -253,7 +265,7 @@ void readExtron1(){
 
       // Extron S0
       // when both Extron switches match In0 or In00 (no active ports), a S0 Profile can be loaded if S0 is enabled
-      if(S0 && ((einput == "In0 " || einput == "In00") && 
+      if(S0 && (currentInputSW2 <= 0) && ((einput == "In0 " || einput == "In00") && 
         (previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) && 
         voutMatrix[eoutput[0]] && (previnput[1] == "discon" || voutMatrix[eoutput[1]+32])){
 
@@ -357,13 +369,21 @@ void readExtron2(){
           if(einput[i] != '0'){
             currentInputSW2 = i+1;
             setTie(2,currentInputSW2);
-            sendSVS(currentInputSW2);
+            sendSVS(currentInputSW2 + 100);
           }
         }
       } //end of for loop
-      if(einput.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && stack1.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && currentInputSW2 != 0){
+      if(einput.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) 
+        && stack1.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && currentInputSW2 != 0){
+        
         currentInputSW2 = 0;
-        if(S0)sendSVS(currentInputSW2);
+
+        if(S0 && (!automatrixSW1 && (previnput[0] == "0" || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) 
+              && voutMatrix[eoutput[1]] && (!automatrixSW1 && (previnput[0] == "discon" || voutMatrix[eoutput[0]+32]))){
+            
+          sendSVS(currentInputSW2);
+        }
+
       }
     } // end of automatrix
     else{                              // less complex switches only report input status, no output status
@@ -388,8 +408,7 @@ void readExtron2(){
       
       // Extron2 S0
       // when both Extron switches match In0 or In00 (no active ports), a Profile 0 can be loaded if S0 is enabled
-      if(S0 &&
-        ((einput == "In0 " || einput == "In00") && 
+      if(S0 && (currentInputSW1 <= 0) && ((einput == "In0 " || einput == "In00") && 
         (previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) && 
         (previnput[0] == "discon" || voutMatrix[eoutput[0]]) && voutMatrix[eoutput[1]+32]){
 
@@ -448,11 +467,13 @@ void readExtron2(){
 
 void sendSVS(uint16_t num){
   Serial.print(F("\rSVS NEW INPUT="));
-  Serial.print(num + offset);
+  if(num != 0)Serial.print(num + offset);
+  else Serial.print(num);
   Serial.println(F("\r"));
   delay(1000);
   Serial.print(F("\rSVS CURRENT INPUT="));
-  Serial.print(num + offset);
+  if(num != 0)Serial.print(num + offset);
+  else Serial.print(num);
   Serial.println(F("\r"));
 }
 
@@ -479,7 +500,6 @@ void LS0time1(unsigned long eTime){
     currentTime = 0;
     prevTime = 0;
     extronSerial.print("0LS");
-    //extronSerial.write(ZEROLS,5);
     delay(20);
  }
 }  // end of LS0time1()
@@ -492,7 +512,6 @@ void LS0time2(unsigned long eTime){
     currentTime2 = 0;
     prevTime2 = 0;
     extronSerial2.print("0LS");
-    //extronSerial.write(ZEROLS,5);
     delay(20);
  }
 }  // end of LS0time2()
