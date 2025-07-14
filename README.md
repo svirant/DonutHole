@@ -7,8 +7,27 @@
    - Must reflash "firmware" with offset variable set so SVS profile numbers don't overlap.
    - Up to 5 have been connected together simultaneously. More may be supported, but this is the max number I've been able to test.
  - Full instructions listed below for building your own!
- - If DIY is not your thing, I also have a handful assembled and available for purchase on [Ko-fi](https://ko-fi.com/donutswdad/shop)
 
+> [!TIP]
+> If DIY is not your thing. I have assembled versions available in my [Ko-fi](https://ko-fi.com/donutswdad/shop) shop.
+</br>
+
+> [!NOTE]
+> *NEW* beta allows **auto-switching on Extron Matrix switchers** that support DSVP.
+> <br /> - Works with RGBS/HV and HDMI/DVI signal types.
+> 
+> <br /> Use the follow Options to enable:
+> ```
+> bool automatrixSW1 = true; // set true for auto matrix switching on "SW1" port
+> bool automatrixSW2 = false; // set true for auto matrix switching on "SW2" port
+> 
+> int amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
+> int amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
+> 
+> int automatrixOutputPortSW1 = 1; // set to the output port on "SW1" connected to the RT4K
+> int automatrixOutputPortSW2 = 1; // set to the output port on "SW2" connected to the RT4K
+> ```
+<br />
 <br />
 <img width="700" src="./images/1.JPG" />
 <br />
