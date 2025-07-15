@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.3f
+* Donut Hole v0.3g
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,16 +26,8 @@
 //////////////////
 */
 
-uint8_t debugE1CAP = 0; // line ~188
-uint8_t debugE2CAP = 0; // line ~336
-
-// For Extron Matrix switches that support DSVP. RGBS and HDMI/DVI video types.
-
-bool automatrixSW1 = true; // enable for auto matrix switching on "SW1" port
-bool automatrixSW2 = false; // enable for auto matrix switching on "SW2" port
-
-int amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
-int amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
+uint8_t debugE1CAP = 0; // line ~186
+uint8_t debugE2CAP = 0; // line ~338
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -44,7 +36,15 @@ bool S0 = false;         // (Profile 0)
                          //  ** Recommended to leave this option "false" if using in tandem with other Serial devices. **
                          //
                          // If set to "true", "S0_<user definted>.rt4" will load when all inputs are in-active on SW1 (and SW2 if connected). 
-                       
+
+//
+// For Extron Matrix switches that support DSVP. RGBS and HDMI/DVI video types.
+
+bool automatrixSW1 = true; // enable for auto matrix switching on "SW1" port
+bool automatrixSW2 = false; // enable for auto matrix switching on "SW2" port
+
+int amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
+int amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
 
 uint8_t const voutMatrix[65] = {1,  // MATRIX switchers // leave this set to 1 for the auto switched input to go to ALL outputs, 
                                                         // must set to 0 if you want select outputs to be enabled/disabled as listed below
@@ -117,8 +117,6 @@ uint8_t const voutMatrix[65] = {1,  // MATRIX switchers // leave this set to 1 f
                            1,  // 2ND MATRIX SWITCH output 32 (1 = enabled, 0 = disabled)
                            };
                            
-
-
 ////////////////////////////////////////////////////////////////////////
 
 
@@ -139,10 +137,10 @@ int currentInputSW2 = -1;
 byte VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
 
 // variables used for LS Time funcions
-unsigned long currentTime = 0; 
-unsigned long currentTime2 = 0;
-unsigned long prevTime = 0;
-unsigned long prevTime2 = 0;
+unsigned long LScurrentTime = 0; 
+unsigned long LScurrentTime2 = 0;
+unsigned long LSprevTime = 0;
+unsigned long LSprevTime2 = 0;
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -212,6 +210,10 @@ void readExtron1(){
     }
     else if(ecap.substring(amSizeSW1 + 6,amSizeSW1 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 6,amSizeSW1 + 11);
+      eoutput[0] = 0;
+    }
+    else if(ecap.substring(amSizeSW1 + 7,amSizeSW1 + 10) == "Rpr"){ // detect if a Preset has been used 
+      einput = ecap.substring(amSizeSW1 + 7,amSizeSW1 + 12);
       eoutput[0] = 0;
     }
     else if(ecap.substring(0,3) == "In0" && automatrixSW1){
@@ -361,6 +363,10 @@ void readExtron2(){
       einput = ecap.substring(amSizeSW2 + 6,amSizeSW2 + 11);
       eoutput[1] = 0;
     }
+    else if(ecap.substring(amSizeSW2 + 7,amSizeSW2 + 10) == "Rpr"){ // detect if a Preset has been used 
+      einput = ecap.substring(amSizeSW2 + 7,amSizeSW2 + 12);
+      eoutput[1] = 0;
+    }
     else if(ecap.substring(0,3) == "In0" && automatrixSW2){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
         einput = ecap.substring(5,amSizeSW2 + 5);
@@ -478,33 +484,33 @@ void sendSVS(uint16_t num){
   if(num != 0)Serial.print(num + offset);
   else Serial.print(num);
   Serial.println(F("\r"));
-}
+} // end of sendSVS()
 
 void LS0time1(unsigned long eTime){
-  currentTime = millis();  // Init timer
-  if(prevTime == 0)       // If previous timer not initialized, do so now.
-    prevTime = millis();
-  if((currentTime - prevTime) >= eTime){ // If it's been longer than eTime, send "0LS" and reset the timer.
-    currentTime = 0;
-    prevTime = 0;
+  LScurrentTime = millis();  // Init timer
+  if(LSprevTime == 0)       // If previous timer not initialized, do so now.
+    LSprevTime = millis();
+  if((LScurrentTime - LSprevTime) >= eTime){ // If it's been longer than eTime, send "0LS" and reset the timer.
+    LScurrentTime = 0;
+    LSprevTime = 0;
     extronSerial.print("0LS");
     delay(20);
  }
 }  // end of LS0time1()
 
 void LS0time2(unsigned long eTime){
-  currentTime2 = millis();  // Init timer
-  if(prevTime2 == 0)       // If previous timer not initialized, do so now.
-    prevTime2 = millis();
-  if((currentTime2 - prevTime2) >= eTime){ // If it's been longer than eTime, send "0LS" and reset the timer.
-    currentTime2 = 0;
-    prevTime2 = 0;
+  LScurrentTime2 = millis();  // Init timer
+  if(LSprevTime2 == 0)       // If previous timer not initialized, do so now.
+    LSprevTime2 = millis();
+  if((LScurrentTime2 - LSprevTime2) >= eTime){ // If it's been longer than eTime, send "0LS" and reset the timer.
+    LScurrentTime2 = 0;
+    LSprevTime2 = 0;
     extronSerial2.print("0LS");
     delay(20);
  }
 }  // end of LS0time2()
 
-void setTie(int sw,uint16_t num){
+void setTie(uint8_t sw, uint8_t num){
   if(sw == 1){
     if(voutMatrix[0] == 1){
       extronSerial.print(num);
