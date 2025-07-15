@@ -29,7 +29,10 @@
 > ```
 <br />
 <br />
-<img width="700" src="./images/1.JPG" />
+<img width="700" src="./images/1a.JPG" />
+<img width="700" src="./images/1b.JPG" />
+<img width="700" src="./images/1c.JPG" />
+<img width="700" src="./images/1d.JPG" />
 <br />
 
 # Supported Switches
@@ -39,8 +42,8 @@
 | TESmart 16x1 HDMI  | yes, confirmed first hand  | |
 | MT-VIKI 8 port HDMI | yes, confirmed first hand | Manual selection of inputs via front case buttons and included IR remote do not generate serial output on the switch itself therefor profile changes can't happen for these 2 methods. Auto selection works fine. |
 | Extron RGBHV sw6  | yes, confirmed first hand  | auto-profiles triggered by manual selection or auto-switching |
-| Extron DXP 88 | yes, confirmed first hand | Works with Presets only. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc|
-| Extron CrossPoint, MVX, etc | at the moment, Presets only as described above. | This is the only method in common with all the advanced Extron devices. |
+| Extron DXP 88 | yes, confirmed first hand | auto-switching coming soon! Works with Presets. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc|
+| Extron CrossPoint, MVX, etc | yes, confirmed by other users | auto-switching coming soon! Presets only at the moment. |
 
 <br />
 
@@ -87,7 +90,8 @@ There are plenty of options for PCB manufacturing but I prefer [JLCPCB](https://
 | 1  | | Arduino Nano type c | Support [RetroRGB!](https://amzn.to/4gnHqN4) | Make sure the headers are not soldered. |
 | 1  | | Any 3.5mm / aux / stereo / trs / cable | [AliExpress](https://www.aliexpress.us/item/2255799962255486.html) | |
 | 1  | | usb-c cable for Arduino power & programming | [AliExpress](https://www.aliexpress.us/item/3256806983355947.html) | |
-| (needed for RS-232 DB9 connections) | | DB9 Male to 3.5mm Male Serial RS232 Cable 6feet | [Amazon](https://www.amazon.com/LIANSHU-DC3-5mm-Serial-RS232-Cable/dp/B07G2ZL3SL/) | "MUST" be wired as so: [DB9 Male Pin 5 -> Sleeve, DB9 Male Pin 2 -> Tip, DB9 Male Pin 3 -> Ring](/images/7.png) |
+| (needed for RS-232 DB9 connections) | | MT-VIKI / Extron / DB9 adapter | [DIY](https://github.com/svirant/DonutDongle/tree/main/Accessories) | ...or purchase from below |
+| | | DB9 Male to 3.5mm Male Serial RS232 Cable 6feet | [Amazon](https://www.amazon.com/LIANSHU-DC3-5mm-Serial-RS232-Cable/dp/B07G2ZL3SL/) | "MUST" be wired as so: [DB9 Male Pin 5 -> Sleeve, DB9 Male Pin 2 -> Tip, DB9 Male Pin 3 -> Ring](/images/7.png) |
 
 
 # Programming an Arduino Nano
@@ -114,8 +118,8 @@ Some Arduino Nanos come with an Old Bootloader and won't Upload unless specified
 
 **Input 1-10... = S1_ - S10_ ...,etc**
 
-The "offset" option can be used if using multiple Donut Holes, gSerial Enablers, Donut Dongles are connected to the RT4K via a headphone splitter. For example, if using a 2nd, change "offset = 100" for the 2nd device to be SVS profiles 101 - 110.
+The "offset" option can be used if using multiple Donut Holes, gSerial Enablers, Donut Dongles are connected to the RT4K via a headphone splitter. For example, if using a 2nd, change "offset = 300" for the 2nd device to be SVS profiles 301 - 310.
 
 ```
-uint16_t const offset = 0; // Only needed for multiple Donut Holes, gSerial Enablers, Donut Dongles. Set offset so 2nd, 3rd, etc gSEs don't overlap profiles. (e.g. offset = 100;) 
+uint16_t const offset = 0; // Only needed for multiple Donut Holes, gSerial Enablers, Donut Dongles. Set offset so 2nd, 3rd, etc gSEs don't overlap profiles. (e.g. offset = 300;) 
 ```
