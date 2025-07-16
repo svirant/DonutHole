@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.3g
+* Donut Hole v0.3h
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -45,10 +45,14 @@ bool automatrixSW2 = false; // enable for auto matrix switching on "SW2" port
 
 int amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
 int amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
-
-uint8_t const voutMatrix[65] = {1,  // MATRIX switchers // leave this set to 1 for the auto switched input to go to ALL outputs, 
-                                                        // must set to 0 if you want select outputs to be enabled/disabled as listed below
+                                                        
+uint8_t const voutMatrix[66] = {1,  // MATRIX switchers // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
+                                                        // set to 1 for the auto switched intput to go to ALL outputs
+                                                        // set to 0 to select outputs to be enabled/disabled as listed below
                                                         //
+                                                        // When auto matrix mode is disabled: 
+                                                        // ALL input changes to any/all outputs result in a profile change
+                                                        // disable specific outputs from triggering profile changes
                            1,  // output 1 SW1 (1 = enabled, 0 = disabled)
                            1,  // output 2
                            1,  // output 3
@@ -115,6 +119,7 @@ uint8_t const voutMatrix[65] = {1,  // MATRIX switchers // leave this set to 1 f
                            1,  // 2ND MATRIX SWITCH output 30
                            1,  // 2ND MATRIX SWITCH output 31
                            1,  // 2ND MATRIX SWITCH output 32 (1 = enabled, 0 = disabled)
+                           1,  // leave set to 1
                            };
                            
 ////////////////////////////////////////////////////////////////////////
@@ -202,21 +207,21 @@ void readExtron1(){
     }
     else if(ecap.substring(0,1) == "F"){ // detect if switch has changed auto/manual states
       einput = ecap.substring(4,8);
-      eoutput[0] = 0;
+      eoutput[0] = 65;
     }
     else if(ecap.substring(0,3) == "Rpr"){ // detect if a Preset has been used
       einput = ecap.substring(0,5);
-      eoutput[0] = 0;
+      eoutput[0] = 65;
     }
     else if(ecap.substring(amSizeSW1 + 6,amSizeSW1 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 6,amSizeSW1 + 11);
-      eoutput[0] = 0;
+      eoutput[0] = 65;
     }
     else if(ecap.substring(amSizeSW1 + 7,amSizeSW1 + 10) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 7,amSizeSW1 + 12);
-      eoutput[0] = 0;
+      eoutput[0] = 65;
     }
-    else if(ecap.substring(0,3) == "In0" && automatrixSW1){
+    else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW1){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
         einput = ecap.substring(5,amSizeSW1 + 5);
       }else 
@@ -235,10 +240,11 @@ void readExtron1(){
         && stack1.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) && currentInputSW1 != 0){
 
         currentInputSW1 = 0;
+        setTie(1,currentInputSW1);
 
         if(S0 && (!automatrixSW2 && (previnput[1] == "0" || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) 
-              && voutMatrix[eoutput[0]] && (!automatrixSW2 && (previnput[1] == "discon" || voutMatrix[eoutput[1]+32]))){
-            
+              && (!automatrixSW2 && (previnput[1] == "discon" || voutMatrix[eoutput[1]+32]))){
+
           sendSVS(currentInputSW1);
         }
 
@@ -246,7 +252,7 @@ void readExtron1(){
     } // end of automatrix
     else{                             // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
-      eoutput[0] = 0;
+      eoutput[0] = 65;
     }
 
 
@@ -353,21 +359,21 @@ void readExtron2(){
     }
     else if(ecap.substring(0,1) == "F"){ // detect if switch has changed auto/manual states
       einput = ecap.substring(4,8);
-      eoutput[1] = 0;
+      eoutput[1] = 65;
     }
     else if(ecap.substring(0,3) == "Rpr"){ // detect if a Preset has been used
       einput = ecap.substring(0,5);
-      eoutput[1] = 0;
+      eoutput[1] = 65;
     }
     else if(ecap.substring(amSizeSW2 + 6,amSizeSW2 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW2 + 6,amSizeSW2 + 11);
-      eoutput[1] = 0;
+      eoutput[1] = 65;
     }
     else if(ecap.substring(amSizeSW2 + 7,amSizeSW2 + 10) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW2 + 7,amSizeSW2 + 12);
-      eoutput[1] = 0;
+      eoutput[1] = 65;
     }
-    else if(ecap.substring(0,3) == "In0" && automatrixSW2){ // start of automatrix
+    else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW2){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
         einput = ecap.substring(5,amSizeSW2 + 5);
       }else 
@@ -377,19 +383,21 @@ void readExtron2(){
           stack2[i] = einput[i];
           if(einput[i] != '0'){
             currentInputSW2 = i+1;
+
             setTie(2,currentInputSW2);
             sendSVS(currentInputSW2 + 100);
           }
         }
       } //end of for loop
       if(einput.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) 
-        && stack1.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && currentInputSW2 != 0){
+        && stack2.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && currentInputSW2 != 0){
         
         currentInputSW2 = 0;
+        setTie(2,currentInputSW2);  
 
         if(S0 && (!automatrixSW1 && (previnput[0] == "0" || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) 
-              && voutMatrix[eoutput[1]] && (!automatrixSW1 && (previnput[0] == "discon" || voutMatrix[eoutput[0]+32]))){
-            
+              && (!automatrixSW1 && (previnput[0] == "discon" || voutMatrix[eoutput[0]]))){
+
           sendSVS(currentInputSW2);
         }
 
@@ -397,7 +405,7 @@ void readExtron2(){
     } // end of automatrix
     else{                              // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
-      eoutput[1] = 0;
+      eoutput[1] = 65;
     }
 
 
