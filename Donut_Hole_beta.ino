@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.3h
+* Donut Hole v0.3i
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 //////////////////
 */
 
-uint8_t debugE1CAP = 0; // line ~186
-uint8_t debugE2CAP = 0; // line ~338
+uint8_t debugE1CAP = 0; // line ~191
+uint8_t debugE2CAP = 0; // line ~344
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -520,34 +520,36 @@ void LS0time2(unsigned long eTime){
 
 void setTie(uint8_t sw, uint8_t num){
   if(sw == 1){
-    if(voutMatrix[0] == 1){
+    if(voutMatrix[0]){
       extronSerial.print(num);
       extronSerial.print(F("*"));
       extronSerial.print(F("!"));
     }
     else{
       for(int i=1;i<(amSizeSW1 + 1);i++){
-        if(voutMatrix[i] == 1)extronSerial.print(num);
-        else extronSerial.print(0);
-        extronSerial.print(F("*"));
-        extronSerial.print(i);
-        extronSerial.print(F("!"));
+        if(voutMatrix[i]){
+          extronSerial.print(num);
+          extronSerial.print(F("*"));
+          extronSerial.print(i);
+          extronSerial.print(F("!"));
+        }
       }
     }
   }
   else if(sw == 2){
-    if(voutMatrix[0] == 1){
+    if(voutMatrix[0]){
       extronSerial2.print(num);
       extronSerial2.print(F("*"));
       extronSerial2.print(F("!"));
     }
     else{
       for(int i=33;i<(amSizeSW2 + 33);i++){
-        if(voutMatrix[i] == 1)extronSerial2.print(num);
-        else extronSerial2.print(0);
-        extronSerial2.print(F("*"));
-        extronSerial2.print(i - 32);
-        extronSerial2.print(F("!"));
+        if(voutMatrix[i]){
+          extronSerial2.print(num);
+          extronSerial2.print(F("*"));
+          extronSerial2.print(i - 32);
+          extronSerial2.print(F("!"));
+        }
       }
     }
   }
