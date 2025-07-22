@@ -27,11 +27,11 @@
 */
 
 uint8_t const debugE1CAP = 0; // line ~267
-uint8_t const debugE2CAP = 0; // line ~427
+uint8_t const debugE2CAP = 0; // line ~428
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
-bool const S0 = false;         // (Profile 0) 
+bool S0 = false;         // (Profile 0) 
                          //
                          //  ** Recommended to leave this option "false" if using in tandem with other Serial devices. **
                          //
