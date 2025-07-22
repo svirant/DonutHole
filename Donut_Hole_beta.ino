@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.3k
+* Donut Hole v0.3l
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,12 +26,12 @@
 //////////////////
 */
 
-uint8_t debugE1CAP = 0; // line ~267
-uint8_t debugE2CAP = 0; // line ~427
+uint8_t const debugE1CAP = 0; // line ~267
+uint8_t const debugE2CAP = 0; // line ~427
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
-bool S0 = false;         // (Profile 0) 
+bool const S0 = false;         // (Profile 0) 
                          //
                          //  ** Recommended to leave this option "false" if using in tandem with other Serial devices. **
                          //
@@ -40,11 +40,11 @@ bool S0 = false;         // (Profile 0)
 //
 // For Extron Matrix switches that support DSVP. RGBS and HDMI/DVI video types.
 
-bool automatrixSW1 = true; // enable for auto matrix switching on "SW1" port
-bool automatrixSW2 = false; // enable for auto matrix switching on "SW2" port
+bool const automatrixSW1 = true; // enable for auto matrix switching on "SW1" port
+bool const automatrixSW2 = false; // enable for auto matrix switching on "SW2" port
 
-int amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
-int amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
+int const amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
+int const amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
 
 uint8_t const vinMatrix[65] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
                                                         // set to 1 for the auto switched input to trigger a Preset on SW1
@@ -323,6 +323,7 @@ void readExtron1(){
         && stack1.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) && currentInputSW1 != 0){ // check for all inputs being off
 
         currentInputSW1 = 0;
+        previnput[0] = "0";
         setTie(1,currentInputSW1);
 
         if(S0 && (!automatrixSW2 && (previnput[1] == "0" || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) 
@@ -481,6 +482,7 @@ void readExtron2(){
         && stack2.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && currentInputSW2 != 0){ // check for all inputs being off
         
         currentInputSW2 = 0;
+        previnput[1] = "0";
         setTie(2,currentInputSW2);  
 
         if(S0 && (!automatrixSW1 && (previnput[0] == "0" || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) 
