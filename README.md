@@ -120,6 +120,19 @@ Some Arduino Nanos come with an Old Bootloader and won't Upload unless specified
 
 <img width="600" alt="bootloader" src="./images/2.png" />
 
+## Steps to update offset
+ - 1 - Download and install the [Arduino IDE](https://www.arduino.cc/en/software/) for your PC or Mac
+ - 2 - Click the green "<> Code" button above and "Download ZIP".
+ - 3 - Extract the .zip file and open up the "Donut_Hole.ino" file in the Arduino IDE. It will ask if you would like to move this file inside a folder, select OK.
+ - 4 - With the source code now open, select "Tools" -> "Board" -> "Arduino AVR Boards" -> "Arduino Nano"
+ - 5 - Connect the Donut Hole device to your PC or Mac using the usb-c cable. You should see an LED light up when connected.
+ - 6 - With the Donut Hole now connected, select it's "port" by going to "Tools" -> "Port", and select the port that starts with "/dev/cu.usbserial-" (on Mac) or "COM" if on PC.
+ - 7 - Almost done! :) In the code itself, find the line that starts with "uint16_t const offset = 0;" and change the 0 to 300. It should now look like this: uint16_t const offset = 300;
+   - This will give you profiles 301 - 399 for SW1 and 401 - 499 for SW2
+   - At the moment this is line 32
+ - 8 - From the menu at the top, select "Sketch" -> "Upload". You should see the LEDs on the Donut Hole flicker and a message that says "Done uploading." if successful.
+ - 9 - Disconnect the usb-c cable from your computer and give it a whirl! You can repeat these steps in the future to make any other changes or update if a newer firmware is ever released.
+
   -----------
 # How to Use
 - Make sure **"Auto Load SVS"** is **"On"** under the RT4K Profiles menu.  
