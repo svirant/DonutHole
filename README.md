@@ -131,6 +131,7 @@ Some Arduino Nanos come with an Old Bootloader and won't Upload unless specified
    - This will give you profiles 301 - 399 for SW1 and 401 - 499 for SW2
    - At the moment this is line 32
  - 8 - From the menu at the top, select "Sketch" -> "Upload". You should see the LEDs on the Donut Hole flicker and a message that says "Done uploading." if successful.
+   - If you get errors, see the section above about changing the "Bootloader" type.
  - 9 - Disconnect the usb-c cable from your computer and give it a whirl! You can repeat these steps in the future to make any other changes or update if a newer firmware is ever released.
 
   -----------
