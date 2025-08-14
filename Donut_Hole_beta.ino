@@ -630,6 +630,8 @@ void readExtron2(){
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW2
     if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecapbytes[4] == 95 || iteinputnum2 > 0){
+      mode2 = 1;                             // Sets mode to 1 so the ITE mux data will be ignored while an autoswitch command is detected.
+      modetimer2 = millis();                 // resets modetimer to millis()
       if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || iteinputnum2 == 1){
         sendSVS(101);
       }
