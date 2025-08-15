@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.4 beta
+* Donut Hole v0.4a beta
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -228,8 +228,8 @@ unsigned long sendtimer = 0;
 unsigned long sendtimer2 = 0;
 unsigned long modetimer = 0;
 unsigned long modetimer2 = 0;
-uint8_t itestatus[] = {0,0,0};
-uint8_t itestatus2[] = {0,0,0};
+uint8_t itestatus[] = {3,0,0};
+uint8_t itestatus2[] = {3,0,0};
 bool sendyes = 1;
 bool sendyes2 = 1;
 bool mode = 0;
@@ -288,7 +288,7 @@ void readExtron1(){
         Serial.print(F("ecap ASCII: "));Serial.println(ecap);
       }
     }
-    ecap = String((char *)ecapbytes); // convert bytes to String for Extron switches
+    if(!debugE1CAP) ecap = String((char *)ecapbytes); // convert bytes to String for Extron switches
 
 
     if(ecap.substring(0,3) == "Out" && !automatrixSW1){ // store only the input and output states, some Extron devices report output first instead of input
@@ -388,42 +388,43 @@ void readExtron1(){
 
     //VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
 
-    if(millis() - modetimer > 2000){  // Timer that disables sending SVS serial commands using the ITE mux data when there has recently been an autoswitch command (prevents duplicate commands)
+    if(millis() - modetimer > 1200){  // Timer that disables sending SVS serial commands using the ITE mux data when there has recently been an autoswitch command (prevents duplicate commands)
       modetimer = millis(); // Resets timer to current millis() count to disable this function once the variables have been updated
       mode = 0;  // Sets mode to 0 so the ITE mux data can be used to send SVS serial commands again
       sendyes = 1; // Turns off sendyes so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
     }
 
     if(ecap.startsWith("=") && mode == 0){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
-      if(ecap.substring(10,11) == "P"){        // checks if position 10 of the serial command from the VIKI contains "P" This indicates that the command is from the IT6635 chip
-        itestatus[0] = ecap.substring(11,12).toInt();   // converts ITE mux status message position 10 to integer sets the itestatus array position 0 to that value
+      if(ecap.substring(10,11) == "P"){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+        itestatus[0] = ecap.substring(11,12).toInt();
       }
-      if(ecap.substring(18,20) == ">0"){       // checks if the ITE mux status message contains >0 at position 18-19
-        itestatus[1] = ecap.substring(12,13).toInt();  // converts ITE mux status message position 12 to integer and updates itestatus array position 1 to that value
+      if(ecap.substring(18,20) == ">0"){       // checks the value of the IT66535 IC that points to Dev->0. P2 is input 1 / P1 is input 2 / P0 is input 3
+        itestatus[1] = ecap.substring(12,13).toInt();
       }
-      if(ecap.substring(18,20) == ">1"){       // checks if the ITE mux status message contains >1 at position 18-19
-        itestatus[2] = ecap.substring(12,13).toInt();  // converts ITE mux status message position 12 to integer and updates itestatus array position 3 to that value
+      if(ecap.substring(18,20) == ">1"){       // checks the value of the IT66535 IC that points to Dev->1. P2 is input 4 / P1 is input 5 / P0 is input 6
+        itestatus[2] = ecap.substring(12,13).toInt();
       }
       sendyes = 0;                             // sets sendyes to 0 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
       sendtimer = millis();                    // resets sendtimer to millis()
       modetimer = millis();                    // resets modetimer to millis()
     }
 
-    if((millis() - sendtimer > 300) && sendyes == 0 && mode == 0){   // Checks is all conditions are met to sendSVS based on the ITE messages
+    // sendtimer prevents a duplicated sendSVS event because the "auto_port" message will trigger it as well as the ITE messages. 
+    if((millis() - sendtimer > 300) && sendyes == 0){ // && mode == 0){   // Checks is all conditions are met to sendSVS based on the ITE messages
       sendtimer = millis();                     // resets sendtimer to millis()
       sendyes = 1;                              // sets sendyes to 1 to prevent the message from being resent
-      if(itestatus[0] == 3){                   // Checks itestatus array position 0 to determine if port 3 of the IT6635 chip is currently selected
-        if(itestatus[1] == 2) iteinputnum = 1;   // Checks itestatus array position 1 to determine if port 2 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 1
-        else if(itestatus[1] == 1) iteinputnum = 2;   // Checks itestatus array position 1 to determine if port 1 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 2
-        else if(itestatus[1] == 0) iteinputnum = 3;   // Checks itestatus array position 1 to determine if port 0 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 3
+      if(itestatus[0] == 3){                   // Checks if port 3 of the IT6635 chip is currently selected
+        if(itestatus[1] == 2) iteinputnum = 1;   // Checks if port 2 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 1
+        else if(itestatus[1] == 1) iteinputnum = 2;   // Checks if port 1 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 2
+        else if(itestatus[1] == 0) iteinputnum = 3;   // Checks if port 0 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 3
       }
-      else if(itestatus[0] == 2){                 // Checks itestatus array position 0 to determine if port 2 of the IT6635 chip is currently selected
-        if(itestatus[2] == 2) iteinputnum = 4;   // Checks itestatus array position 1 to determine if port 2 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 4
-        else if(itestatus[2] == 1) iteinputnum = 5;   // Checks itestatus array position 1 to determine if port 1 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 5
-        else if(itestatus[2] == 0) iteinputnum = 6;   // Checks itestatus array position 1 to determine if port 0 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 6
+      else if(itestatus[0] == 2){                 // Checks if port 2 of the IT6635 chip is currently selected
+        if(itestatus[2] == 2) iteinputnum = 4;   // Checks if port 2 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 4
+        else if(itestatus[2] == 1) iteinputnum = 5;   // Checks if port 1 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 5
+        else if(itestatus[2] == 0) iteinputnum = 6;   // Checks if port 0 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 6
       }
-      else if(itestatus[0] == 1) iteinputnum = 7;   // Checks itestatus array position 0 to determine if port 1 of the IT6635 chip is currently selected, Sets iteinputnum to input 7
-      else if(itestatus[0] == 0) iteinputnum = 8;   // Checks itestatus array position 0 to determine if port 0 of the IT6635 chip is currently selected, Sets iteinputnum to input 8
+      else if(itestatus[0] == 1) iteinputnum = 7;   // Checks if port 1 of the IT6635 chip is currently selected, Sets iteinputnum to input 7
+      else if(itestatus[0] == 0) iteinputnum = 8;   // Checks if port 0 of the IT6635 chip is currently selected, Sets iteinputnum to input 8
     }
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW1
@@ -492,7 +493,7 @@ void readExtron2(){
         Serial.print(F("ecap2 ASCII: "));Serial.println(ecap);
       }
     }
-    ecap = String((char *)ecapbytes);
+    if(!debugE2CAP) ecap = String((char *)ecapbytes);
 
     if(ecap.substring(0,3) == "Out"){ // store only the input and output states, some Extron devices report output first instead of input
       einput = ecap.substring(6,10);
@@ -591,47 +592,48 @@ void readExtron2(){
 
     //VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
 
-    if(millis() - modetimer2 > 2000){  // Timer that disables sending SVS serial commands using the ITE mux data when there has recently been an autoswitch command (prevents duplicate commands)
+    if(millis() - modetimer2 > 1200){  // Timer that disables sending SVS serial commands using the ITE mux data when there has recently been an autoswitch command (prevents duplicate commands)
       modetimer2 = millis(); // Resets timer to current millis() count to disable this function once the variables hav been updated
       mode2 = 0;  // Sets mode to 0 so the ITE mux data can be used to send SVS serial commands again
       sendyes2 = 1; // Turns off sendyes so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
     }
 
     if(ecap.startsWith("=") && mode2 == 0){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
-      if(ecap.substring(10,11) == "P"){       // checks if position 10 of the serial command from the VIKI contains "P" This indicates that the command is from the IT6635 chip
-        itestatus2[0] = ecap.substring(11,12).toInt();   // converts ITE mux status message position 10 to integer sets the itestatus array position 0 to that value
+      if(ecap.substring(10,11) == "P"){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+        itestatus2[0] = ecap.substring(11,12).toInt();
       }
-      if(ecap.substring(18,20) == ">0"){       // checks if the ITE mux status message contains >0 at position 18-19
-        itestatus2[1] = ecap.substring(12,13).toInt();  // converts ITE mux status message position 12 to integer and updates itestatus array position 1 to that value
+      if(ecap.substring(18,20) == ">0"){       // checks the value of the IT66535 IC that points to Dev->0. P2 is input 1 / P1 is input 2 / P0 is input 3
+        itestatus2[1] = ecap.substring(12,13).toInt();
       }
-      if(ecap.substring(18,20) == ">1"){       // checks if the ITE mux status message contains >1 at position 18-19
-        itestatus2[2] = ecap.substring(12,13).toInt();  // converts ITE mux status message position 12 to integer and updates itestatus array position 3 to that value
+      if(ecap.substring(18,20) == ">1"){       // checks the value of the IT66535 IC that points to Dev->1. P2 is input 4 / P1 is input 5 / P0 is input 6
+        itestatus2[2] = ecap.substring(12,13).toInt();
       }
       sendyes2 = 0;                             // sets sendyes to 0 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
       sendtimer2 = millis();                    // resets sendtimer to millis()
       modetimer2 = millis();                    // resets modetimer to millis()
     }
-    if((millis() - sendtimer2 > 300) && sendyes2 == 0 && mode2 == 0){   // Checks is all conditions are met to sendSVS based on the ITE messages
+
+    if((millis() - sendtimer2 > 300) && sendyes2 == 0){ // && mode2 == 0){   // Checks is all conditions are met to sendSVS based on the ITE messages
       sendtimer2 = millis();                     // resets sendtimer to millis()
       sendyes2 = 1;                              // sets sendyes to 1 to prevent the message from being resent
-      if(itestatus2[0] == 3){                   // Checks itestatus array position 0 to determine if port 3 of the IT6635 chip is currently selected
-        if(itestatus2[1] == 2) iteinputnum2 = 1;   // Checks itestatus array position 1 to determine if port 2 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 1
-        else if(itestatus2[1] == 1) iteinputnum2 = 2;   // Checks itestatus array position 1 to determine if port 1 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 2
-        else if(itestatus2[1] == 0) iteinputnum2 = 3;   // Checks itestatus array position` 1 to determine if port 0 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 3
+      if(itestatus2[0] == 3){                   // Checks if port 3 of the IT6635 chip is currently selected
+        if(itestatus2[1] == 2) iteinputnum2 = 1;   // Checks if port 2 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 1
+        else if(itestatus2[1] == 1) iteinputnum2 = 2;   // Checks if port 1 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 2
+        else if(itestatus2[1] == 0) iteinputnum2 = 3;   // Checks if port 0 of the IT66353 DEV0 chip is selected, Sets iteinputnum to input 3
       }
-      else if(itestatus2[0] == 2){                 // Checks itestatus array position 0 to determine if port 2 of the IT6635 chip is currently selected
-        if(itestatus2[2] == 2) iteinputnum2 = 4;   // Checks itestatus array position 1 to determine if port 2 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 4
-        else if(itestatus2[2] == 1) iteinputnum2 = 5;   // Checks itestatus array position 1 to determine if port 1 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 5
-        else if(itestatus2[2] == 0) iteinputnum2 = 6;   // Checks itestatus array position 1 to determine if port 0 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 6
+      else if(itestatus2[0] == 2){                 // Checks if port 2 of the IT6635 chip is currently selected
+        if(itestatus2[2] == 2) iteinputnum2 = 4;   // Checks if port 2 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 4
+        else if(itestatus2[2] == 1) iteinputnum2 = 5;   // Checks if port 1 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 5
+        else if(itestatus2[2] == 0) iteinputnum2 = 6;   // Checks if port 0 of the IT66353 DEV1 chip is selected, Sets iteinputnum to input 6
       }
-      else if(itestatus2[0] == 1) iteinputnum2 = 7;   // Checks itestatus array position 0 to determine if port 1 of the IT6635 chip is currently selected, Sets iteinputnum to input 7
-      else if(itestatus2[0] == 0) iteinputnum2 = 8;   // Checks itestatus array position 0 to determine if port 0 of the IT6635 chip is currently selected, Sets iteinputnum to input 8
+      else if(itestatus2[0] == 1) iteinputnum2 = 7;   // Checks if port 1 of the IT6635 chip is currently selected, Sets iteinputnum to input 7
+      else if(itestatus2[0] == 0) iteinputnum2 = 8;   // Checks if port 0 of the IT6635 chip is currently selected, Sets iteinputnum to input 8
     }
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW2
     if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecapbytes[4] == 95 || iteinputnum2 > 0){
       mode2 = 1;                             // Sets mode to 1 so the ITE mux data will be ignored while an autoswitch command is detected.
-      modetimer2 = millis();                 // resets modetimer to millis()
+      modetimer2 = millis();                 // resets modetimer to millis()     
       if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || iteinputnum2 == 1){
         sendSVS(101);
       }
