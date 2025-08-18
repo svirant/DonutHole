@@ -26,20 +26,18 @@
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~281
-uint8_t const debugE2CAP = 0; // line ~487
+uint8_t const debugE1CAP = 0; // line ~279
+uint8_t const debugE2CAP = 0; // line ~489
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
 bool S0 = false;         // (Profile 0) 
-                         //
                          //  ** Recommended to leave this option "false" if using in tandem with other Serial devices. **
-                         //
                          // If set to "true", "S0_<user definted>.rt4" will load when all inputs are in-active on SW1 (and SW2 if connected). 
+                         // ** Does not work with MT-VIKI / TESmart HDMI switches **
 
-//
+
 // For Extron Matrix switches that support DSVP. RGBS and HDMI/DVI video types.
-
 bool const automatrixSW1 = false; // enable for auto matrix switching on "SW1" port
 bool const automatrixSW2 = false; // enable for auto matrix switching on "SW2" port
 
@@ -217,13 +215,13 @@ int currentInputSW1 = -1;
 int currentInputSW2 = -1;
 byte VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
 
-// variables used for LS Time funcions
+// LS Time variables
 unsigned long LScurrentTime = 0; 
 unsigned long LScurrentTime2 = 0;
 unsigned long LSprevTime = 0;
 unsigned long LSprevTime2 = 0;
 
-// VIKI Manual Switch Variables
+// VIKI Manual Switch variables
 unsigned long sendtimer = 0;
 unsigned long sendtimer2 = 0;
 unsigned long ITEtimer = 0;
@@ -386,7 +384,8 @@ void readExtron1(){
 
     }
 
-    //VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
+    // VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
+    // ** hdmi output must be connected when powering on switch for ITE messages to appear, thus manual button detection working **
 
     if(millis() - ITEtimer > 1200){  // Timer that disables sending SVS serial commands using the ITE mux data when there has recently been an autoswitch command (prevents duplicate commands)
       listenITE = 1;  // Sets listenITE to 1 so the ITE mux data can be used to send SVS serial commands again
@@ -395,7 +394,7 @@ void readExtron1(){
     }
 
 
-    if(ecap.startsWith("=") && listenITE == 1){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
+    if(ecap.startsWith("=") && listenITE){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
       if(ecap.substring(10,11) == "P"){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus[0] = ecap.substring(11,12).toInt();
       }
@@ -406,13 +405,13 @@ void readExtron1(){
         ITEstatus[2] = ecap.substring(12,13).toInt();
       }
 
-      ITErecv = 1;                             // sets ITErecv to 1 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
-      sendtimer = millis();                    // resets sendtimer to millis() 
+      ITErecv = 1;                            // sets ITErecv to 1 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
+      sendtimer = millis();                   // resets sendtimer to millis() 
       ITEtimer = millis();                    // resets ITEtimer to millis()
     }
 
 
-    if((millis() - sendtimer > 300) && ITErecv == 1){ // wait 300ms to make sure all ITE messages are received in order to complete ITEstatus
+    if((millis() - sendtimer > 300) && ITErecv){ // wait 300ms to make sure all ITE messages are received in order to complete ITEstatus
       if(ITEstatus[0] == 3){                   // Checks if port 3 of the IT6635 chip is currently selected
         if(ITEstatus[1] == 2) ITEinputnum = 1;   // Checks if port 2 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 1
         else if(ITEstatus[1] == 1) ITEinputnum = 2;   // Checks if port 1 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 2
@@ -594,7 +593,8 @@ void readExtron2(){
     }
 
 
-    //VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
+    // VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
+    // ** hdmi output must be connected when powering on switch for ITE messages to appear, thus manual button detection working **
 
     if(millis() - ITEtimer2 > 1200){  // Timer that disables sending SVS serial commands using the ITE mux data when there has recently been an autoswitch command (prevents duplicate commands)
       listenITE2 = 1;  // Sets listenITE2 to 1 so the ITE mux data can be used to send SVS serial commands again
@@ -603,7 +603,7 @@ void readExtron2(){
     }
 
 
-    if(ecap.startsWith("=") && listenITE2 == 1){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
+    if(ecap.startsWith("=") && listenITE2){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
       if(ecap.substring(10,11) == "P"){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus2[0] = ecap.substring(11,12).toInt();
       }
@@ -619,7 +619,7 @@ void readExtron2(){
     }
 
 
-    if((millis() - sendtimer2 > 300) && ITErecv2 == 1){ // wait 300ms to make sure all ITE messages are received in order to complete ITEstatus
+    if((millis() - sendtimer2 > 300) && ITErecv2){ // wait 300ms to make sure all ITE messages are received in order to complete ITEstatus
       if(ITEstatus2[0] == 3){                   // Checks if port 3 of the IT6635 chip is currently selected
         if(ITEstatus2[1] == 2) ITEinputnum2 = 1;   // Checks if port 2 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 1
         else if(ITEstatus2[1] == 1) ITEinputnum2 = 2;   // Checks if port 1 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 2
