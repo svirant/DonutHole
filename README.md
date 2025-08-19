@@ -13,8 +13,11 @@
 </br>
 
 > [!NOTE]
-> *NEW* beta allows **auto-switching on Extron Matrix switchers** that support DSVP.
-> <br /> - Works with RGBS/HV and HDMI/DVI signal types.
+> *NEW* beta allows:
+> <br /> 
+>   - **front case buttons/remote NOW change profiles on the MT-VIKI HDMI switch.** Thanks to [Arthrimus](https://scalablevideoswitch.com/)!
+>   - **auto-switching on Extron Matrix switchers** that support DSVP. Works with RGBS/HV and HDMI/DVI signal types.
+>
 > 
 > <br /> Use the follow Options to enable:
 > ```
@@ -44,7 +47,6 @@
 <br />
 <br />
 <img width="700" src="./images/1a.JPG" />
-<img width="700" src="./images/1b.JPG" />
 <img width="700" src="./images/1c.JPG" />
 <img width="700" src="./images/1d.JPG" />
 <br />
@@ -55,7 +57,7 @@
 | ------------- | ------------- |------------- |
 | TESmart 16x1 HDMI  | yes, confirmed first hand  | |
 | TESmart 8x1 HDMI  | unconfirmed, but should work, let me know! ||
-| MT-VIKI 8 port HDMI | yes, confirmed first hand | Manual selection of inputs via front case buttons and included IR remote do not generate serial output on the switch itself therefor profile changes can't happen for these 2 methods. Auto selection works fine. |
+| MT-VIKI 8 port HDMI | yes, confirmed first hand | |
 | Extron RGBHV sw6  | yes, confirmed first hand  | auto-profiles triggered by manual selection or auto-switching |
 | Extron DXP 88 | yes, confirmed first hand | auto-switching coming soon! Works with Presets. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc|
 | Extron CrossPoint, MVX, etc | yes, confirmed by other users | auto-switching coming soon! Presets only at the moment. |
