@@ -19,7 +19,7 @@
 >   - **auto-switching on Extron Matrix switchers** that support DSVP. Works with RGBS/HV and HDMI/DVI signal types.
 >
 > 
-> <br /> Use the follow Options to enable:
+> <br /> For Matrix auto-switching, use the follow Options to enable:
 > ```
 > bool automatrixSW1 = true; // set true for auto matrix switching on "SW1" port
 > bool automatrixSW2 = false; // set true for auto matrix switching on "SW2" port
@@ -55,9 +55,9 @@
 (current list, but not limited to)
 | **Switch**    | Supported | Notes |
 | ------------- | ------------- |------------- |
-| TESmart 16x1 HDMI  | yes, confirmed first hand  | |
-| TESmart 8x1 HDMI  | unconfirmed, but should work, let me know! ||
-| MT-VIKI 8 port HDMI | yes, confirmed first hand | |
+| TESmart 16x1 HDMI  | yes, confirmed first hand  | [Amazon](https://a.co/d/9XwZDlt) link for reference|
+| TESmart 8x1 HDMI  | unconfirmed, but should work, let me know! | |
+| MT-VIKI 8 port HDMI | yes, confirmed first hand | [Amazon](https://a.co/d/eHo5uKs) link for reference|
 | Extron RGBHV sw6  | yes, confirmed first hand  | auto-profiles triggered by manual selection or auto-switching |
 | Extron DXP 88 | yes, confirmed first hand | auto-switching coming soon! Works with Presets. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc|
 | Extron CrossPoint, MVX, etc | yes, confirmed by other users | auto-switching coming soon! Presets only at the moment. |
