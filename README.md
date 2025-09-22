@@ -13,7 +13,7 @@
 </br>
 
 > [!NOTE]
-> *NEW* beta allows:
+> *NEW* 0.4c update allows:
 > <br /> 
 >   - **front case buttons/remote NOW change profiles on the MT-VIKI HDMI switch.** Thanks to [Arthrimus](https://scalablevideoswitch.com/)!
 >   - **auto-switching on Extron Matrix switchers** that support DSVP. Works with RGBS/HV and HDMI/DVI signal types.
