@@ -59,8 +59,8 @@
 | TESmart 8x1 HDMI  | unconfirmed, but should work, let me know! | |
 | MT-VIKI 8 port HDMI | yes, confirmed first hand | [Amazon](https://a.co/d/eHo5uKs) link for reference|
 | Extron RGBHV sw6  | yes, confirmed first hand  | auto-profiles triggered by manual selection or auto-switching |
-| Extron DXP 88 | yes, confirmed first hand | auto-switching coming soon! Works with Presets. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc|
-| Extron CrossPoint, MVX, etc | yes, confirmed by other users | auto-switching coming soon! Presets only at the moment. |
+| Extron DXP 88 | yes, confirmed first hand | Auto-switching can be enabled in "Options" section of .ino.  Works with Presets. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc|
+| Extron CrossPoint, MVX, etc | yes, confirmed by other users | Auto-switching can be enabled for switches that supports DSVP and are RGBS/HDMI/DVI signal types. By default, works with Presets as shown in the Note above. |
 
 <br />
 
@@ -96,7 +96,8 @@ There are plenty of options for PCB manufacturing but I prefer [JLCPCB](https://
 
 | **Qty**    | Designation | Part |  Link  |  Notes |
 | ------------- | ------------- |------------- |------------- |------------- |
-| 5  | C1 - C5 | 0.1 uf / 100nf 50V X7R 0805 Capacitor| [Digikey](https://www.digikey.com/en/products/detail/yageo/CC0805KRX7R9BB104/302874?s=N4IgTCBcDaIMwEYEFokBYAMrkDkAiIAugL5A) | |
+| 2  | C1,C2 | 0.1 uf / 100nf 50V X7R 0805 Capacitor| [Digikey](https://www.digikey.com/en/products/detail/yageo/CC0805KRX7R9BB104/302874?s=N4IgTCBcDaIMwEYEFokBYAMrkDkAiIAugL5A) | |
+| 3  | C3 - C5 | 0.3 uf / 330nf 50V X7R 0805 Capacitor| [Digikey](https://www.digikey.com/en/products/detail/samsung-electro-mechanics/CL21B334KBFNNNE/3886781) | |
 | 2  | R1, R2 | 10K OHM 1% 1/8W 0805 Resistor | [Digikey](https://www.digikey.com/en/products/detail/yageo/AC0805FR-0710KL/2827834) | |
 | 1  | U1 | IC BUF NON-INVERT 5.5V SOT23-6 | [Digikey](https://www.digikey.com/en/products/detail/texas-instruments/SN74LVC2G07DBVR/486427) or [alternate](https://www.digikey.com/en/products/detail/umw/SN74LVC2G07DBVR/24889644) | |
 | 1  | U2 | MAX3232 SOP-16 RS-232 Interface IC | [AliExpress](https://www.aliexpress.us/item/3256807314260762.html) | |
