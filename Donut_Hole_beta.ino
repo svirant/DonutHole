@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.4d
+* Donut Hole v0.4e
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -284,12 +284,12 @@ void loop(){
 
 void readExtron1(){
 
-    byte ecapbytes[44]; // used to store first 44 captured bytes / messages for Extron                
+    byte ecapbytes[44]; // used to store first 44 captured bytes / messages for Extron               
     String ecap = "0000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
     String einput = "0000000000000000000000000000000000000000"; // used to store Extron input
 
     if(MTVddSW1){            // if a MT-VIKI switch has been detected on SW1, then the currently active MT-VIKI hdmi port is checked for disconnection
-      MTVtime1(3000);
+      MTVtime1(1500);
     }else if(automatrixSW1){ // if automatrixSW1 is set "true" in options, then "0LS" is sent every 250ms to see if an input has changed
       LS0time1(250);
     }
@@ -297,7 +297,7 @@ void readExtron1(){
     // listens to the Extron sw1 Port for changes
     // SIS Command Responses reference - Page 77 https://media.extron.com/public/download/files/userman/XP300_Matrix_B.pdf
     if(extronSerial.available() > 0){ // if there is data available for reading, read
-      extronSerial.readBytes(ecapbytes,44); // read in and store only the first 13 bytes for every status message received from 1st Extron SW port
+      extronSerial.readBytes(ecapbytes,44); // read in and store only the first 44 bytes for every status message received from 1st Extron SW port
       if(debugE1CAP){
         Serial.print(F("ecap HEX: "));
         for(int i=0;i<44;i++){
@@ -416,7 +416,7 @@ void readExtron1(){
     }
 
 
-    if(ecap.startsWith("=") && listenITE){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
+    if(ecap.substring(0,3) == "==>"  && listenITE){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
       if(ecap.substring(10,11) == "P"){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus[0] = ecap.substring(11,12).toInt();
       }
@@ -455,7 +455,7 @@ void readExtron1(){
     if(ecapbytes[4] == 95 || ITEinputnum > 0) MTVddSW1 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW1
-    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecapbytes[4] == 95 || ITEinputnum > 0){
+    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ITEinputnum > 0){
       if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ITEinputnum == 1){
         sendSVS(1);
         currentMTVinput = 1;
@@ -503,8 +503,8 @@ void readExtron1(){
         sendSVS(ecapbytes[5] - 21);
       }
 
+      if(ecap.substring(0,5) == "Auto_") listenITE = 0; // Sets listenITE to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
       ITEinputnum = 0;                     // Resets ITEinputnum to 0 so sendSVS will not repeat after this cycle through the void loop
-      listenITE = 0;                       // Sets listenITE to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
       ITEtimer = millis();                 // resets ITEtimer to millis()
       MTVprevTime = millis();              // delays disconnection detection timer so it wont interrupt
      }
@@ -533,14 +533,14 @@ void readExtron2(){
     String einput = "0000000000000000000000000000000000000000"; // used to store Extron input
 
     if(MTVddSW2){            // if a MT-VIKI switch has been detected on SW2, then the currently active MT-VIKI hdmi port is checked for disconnection
-      MTVtime2(3000);
+      MTVtime2(1500);
     }else if(automatrixSW2){ // if automatrixSW2 is set "true" in options, then "0LS" is sent every 250ms to see if an input has changed
       LS0time2(250);
     }
 
     // listens to the Extron sw2 Port for changes
     if(extronSerial2.available() > 0){ // if there is data available for reading, read
-      extronSerial2.readBytes(ecapbytes,44); // read in and store only the first 13 bytes for every status message received from 2nd Extron port
+      extronSerial2.readBytes(ecapbytes,44); // read in and store only the first 44 bytes for every status message received from 2nd Extron port
       if(debugE2CAP){
         Serial.print(F("ecap2 HEX: "));
         for(int i=0;i<44;i++){
@@ -697,7 +697,7 @@ void readExtron2(){
     if(ecapbytes[4] == 95 || ITEinputnum2 > 0) MTVddSW2 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW2
-    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecapbytes[4] == 95 || ITEinputnum2 > 0){
+    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ITEinputnum2 > 0){
       if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ITEinputnum2 == 1){
         sendSVS(101);
         currentMTVinput2 = 101;
@@ -745,8 +745,8 @@ void readExtron2(){
         sendSVS(ecapbytes[5] + 79);
       }
 
+      if(ecap.substring(0,5) == "Auto_") listenITE2 = 0; // Sets listenITE2 to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
       ITEinputnum2 = 0;                     // Resets ITEinputnum to 0 so sendSVS will not repeat after this cycle through the void loop
-      listenITE2 = 0;                       // Sets listenITE2 to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
       ITEtimer2 = millis();                 // resets ITEtimer to millis()
       MTVprevTime2 = millis();              // delays disconnection detection timer so it wont interrupt 
     }
@@ -858,17 +858,15 @@ void MTVtime1(unsigned long eTime){
   if((MTVcurrentTime - MTVprevTime) >= eTime){ // If it's been longer than eTime, send MT-VIKI serial command for current input, see if it responds with disconnected, and reset the timer.
     MTVcurrentTime = 0;
     MTVprevTime = 0;
-    if(extronSerial.available() == 0){ // make sure serial buffer is empty before sending commands
-      if(currentMTVinput == 1) extronSerial.write(viki1,4);
-      else if(currentMTVinput == 2) extronSerial.write(viki2,4);
-      else if(currentMTVinput == 3) extronSerial.write(viki3,4);
-      else if(currentMTVinput == 4) extronSerial.write(viki4,4);
-      else if(currentMTVinput == 5) extronSerial.write(viki5,4);
-      else if(currentMTVinput == 6) extronSerial.write(viki6,4);
-      else if(currentMTVinput == 7) extronSerial.write(viki7,4);
-      else if(currentMTVinput == 8) extronSerial.write(viki8,4);
-      delay(50);
-    }
+    if(currentMTVinput == 1) extronSerial.write(viki1,4);
+    else if(currentMTVinput == 2) extronSerial.write(viki2,4);
+    else if(currentMTVinput == 3) extronSerial.write(viki3,4);
+    else if(currentMTVinput == 4) extronSerial.write(viki4,4);
+    else if(currentMTVinput == 5) extronSerial.write(viki5,4);
+    else if(currentMTVinput == 6) extronSerial.write(viki6,4);
+    else if(currentMTVinput == 7) extronSerial.write(viki7,4);
+    else if(currentMTVinput == 8) extronSerial.write(viki8,4);
+    delay(50);
  }
 }  // end of MTVtime1()
 
@@ -879,16 +877,14 @@ void MTVtime2(unsigned long eTime){
   if((MTVcurrentTime2 - MTVprevTime2) >= eTime){ // If it's been longer than eTime, send MT-VIKI serial command for current input, see if it responds with disconnected, and reset the timer.
     MTVcurrentTime2 = 0;
     MTVprevTime2 = 0;
-    if(extronSerial2.available() == 0){ // make sure serial buffer is empty before sending commands
-      if(currentMTVinput2 == 101) extronSerial2.write(viki1,4);
-      else if(currentMTVinput2 == 102) extronSerial2.write(viki2,4);
-      else if(currentMTVinput2 == 103) extronSerial2.write(viki3,4);
-      else if(currentMTVinput2 == 104) extronSerial2.write(viki4,4);
-      else if(currentMTVinput2 == 105) extronSerial2.write(viki5,4);
-      else if(currentMTVinput2 == 106) extronSerial2.write(viki6,4);
-      else if(currentMTVinput2 == 107) extronSerial2.write(viki7,4);
-      else if(currentMTVinput2 == 108) extronSerial2.write(viki8,4);
-      delay(50);
-    }
+    if(currentMTVinput2 == 101) extronSerial2.write(viki1,4);
+    else if(currentMTVinput2 == 102) extronSerial2.write(viki2,4);
+    else if(currentMTVinput2 == 103) extronSerial2.write(viki3,4);
+    else if(currentMTVinput2 == 104) extronSerial2.write(viki4,4);
+    else if(currentMTVinput2 == 105) extronSerial2.write(viki5,4);
+    else if(currentMTVinput2 == 106) extronSerial2.write(viki6,4);
+    else if(currentMTVinput2 == 107) extronSerial2.write(viki7,4);
+    else if(currentMTVinput2 == 108) extronSerial2.write(viki8,4);
+    delay(50);
  }
 }  // end of MTVtime2()
