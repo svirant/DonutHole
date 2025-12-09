@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.4e
+* Donut Hole v0.4f
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 */
 
 uint8_t const debugE1CAP = 0; // line ~301
-uint8_t const debugE2CAP = 0; // line ~544
+uint8_t const debugE2CAP = 0; // line ~553
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -409,22 +409,31 @@ void readExtron1(){
     // VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
     // ** hdmi output must be connected when powering on switch for ITE messages to appear, thus manual button detection working **
 
-    if(millis() - ITEtimer > 1200){  // Timer that disables sending SVS serial commands using the ITE mux data when there has recently been an autoswitch command (prevents duplicate commands)
+    if(millis() - ITEtimer > 1200){  // Timer that re-enables sending SVS serial commands using the ITE mux data after an autoswitch command (prevents duplicate commands)
       listenITE = 1;  // Sets listenITE to 1 so the ITE mux data can be used to send SVS serial commands again
       ITErecv = 0; // Turns off ITErecv so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
       ITEtimer = millis(); // Resets timer to current millis() count to disable this function once the variables have been updated
     }
 
 
-    if(ecap.substring(0,3) == "==>"  && listenITE){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
+    if((ecap.substring(0,3) == "==>" || ecap.substring(15,18) == "==>") && listenITE){   // checks if the serial command from the VIKI starts with "==>" This indicates that the command is an ITE mux status message
       if(ecap.substring(10,11) == "P"){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus[0] = ecap.substring(11,12).toInt();
+      }
+      if(ecap.substring(25,26) == "P"){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+        ITEstatus[0] = ecap.substring(26,27).toInt();
       }
       if(ecap.substring(18,20) == ">0"){       // checks the value of the IT66535 IC that points to Dev->0. P2 is input 1 / P1 is input 2 / P0 is input 3
         ITEstatus[1] = ecap.substring(12,13).toInt();
       }
+      if(ecap.substring(33,35) == ">0"){       // checks the value of the IT66535 IC that points to Dev->0. P2 is input 1 / P1 is input 2 / P0 is input 3
+        ITEstatus[1] = ecap.substring(27,28).toInt();
+      }
       if(ecap.substring(18,20) == ">1"){       // checks the value of the IT66535 IC that points to Dev->1. P2 is input 4 / P1 is input 5 / P0 is input 6
         ITEstatus[2] = ecap.substring(12,13).toInt();
+      }
+      if(ecap.substring(33,35) == ">1"){       // checks the value of the IT66535 IC that points to Dev->1. P2 is input 4 / P1 is input 5 / P0 is input 6
+        ITEstatus[2] = ecap.substring(27,28).toInt();
       }
 
       ITErecv = 1;                            // sets ITErecv to 1 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
@@ -452,7 +461,7 @@ void readExtron1(){
       sendtimer = millis();                     // resets sendtimer to millis()
     }
 
-    if(ecapbytes[4] == 95 || ITEinputnum > 0) MTVddSW1 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
+    if(ecap.substring(0,5) == "Auto_" || ITEinputnum > 0) MTVddSW1 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW1
     if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ITEinputnum > 0){
@@ -652,22 +661,31 @@ void readExtron2(){
     // VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
     // ** hdmi output must be connected when powering on switch for ITE messages to appear, thus manual button detection working **
 
-    if(millis() - ITEtimer2 > 1200){  // Timer that disables sending SVS serial commands using the ITE mux data when there has recently been an autoswitch command (prevents duplicate commands)
+    if(millis() - ITEtimer2 > 1200){  // Timer that re-enables sending SVS serial commands using the ITE mux data after an autoswitch command (prevents duplicate commands)
       listenITE2 = 1;  // Sets listenITE2 to 1 so the ITE mux data can be used to send SVS serial commands again
       ITErecv2 = 0; // Turns off ITErecv2 so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
       ITEtimer2 = millis(); // Resets timer to current millis() count to disable this function once the variables hav been updated
     }
 
 
-    if(ecap.startsWith("=") && listenITE2){   // checks if the serial command from the VIKI starts with "=" This indicates that the command is an ITE mux status message
+    if((ecap.substring(0,3) == "==>" || ecap.substring(15,18) == "==>") && listenITE2){   // checks if the serial command from the VIKI starts with "==>" This indicates that the command is an ITE mux status message
       if(ecap.substring(10,11) == "P"){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus2[0] = ecap.substring(11,12).toInt();
+      }
+      if(ecap.substring(25,26) == "P"){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+        ITEstatus2[0] = ecap.substring(26,27).toInt();
       }
       if(ecap.substring(18,20) == ">0"){       // checks the value of the IT66535 IC that points to Dev->0. P2 is input 1 / P1 is input 2 / P0 is input 3
         ITEstatus2[1] = ecap.substring(12,13).toInt();
       }
+      if(ecap.substring(33,35) == ">0"){       // checks the value of the IT66535 IC that points to Dev->0. P2 is input 1 / P1 is input 2 / P0 is input 3
+        ITEstatus2[1] = ecap.substring(27,28).toInt();
+      }
       if(ecap.substring(18,20) == ">1"){       // checks the value of the IT66535 IC that points to Dev->1. P2 is input 4 / P1 is input 5 / P0 is input 6
         ITEstatus2[2] = ecap.substring(12,13).toInt();
+      }
+      if(ecap.substring(33,35) == ">1"){       // checks the value of the IT66535 IC that points to Dev->1. P2 is input 4 / P1 is input 5 / P0 is input 6
+        ITEstatus2[2] = ecap.substring(27,28).toInt();
       }
       ITErecv2 = 1;                             // sets ITErecv2 to 1 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
       sendtimer2 = millis();                    // resets sendtimer2 to millis()
@@ -694,7 +712,7 @@ void readExtron2(){
       sendtimer2 = millis();                     // resets sendtimer2 to millis()
     }
 
-    if(ecapbytes[4] == 95 || ITEinputnum2 > 0) MTVddSW2 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
+    if(ecap.substring(0,5) == "Auto_" || ITEinputnum2 > 0) MTVddSW2 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW2
     if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ITEinputnum2 > 0){
