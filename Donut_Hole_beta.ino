@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.4g
+* Donut Hole v0.4g1
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~301
+uint8_t const debugE1CAP = 0; // line ~311
 uint8_t const debugE2CAP = 0; // line ~553
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
@@ -374,7 +374,7 @@ void readExtron1(){
     }
 
 
-    // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMaxtrix
+    // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
     if((einput.substring(0,2) == "In" && voutMatrix[eoutput[0]] && !automatrixSW1) || (einput.substring(0,3) == "Rpr")){
       if(einput.substring(0,3) == "Rpr"){
         sendSVS(einput.substring(3,5).toInt());
@@ -512,7 +512,7 @@ void readExtron1(){
         sendSVS(ecapbytes[5] - 21);
       }
 
-      if(ecap.substring(0,5) == "Auto_") listenITE = 0; // Sets listenITE to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
+      if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_") listenITE = 0; // Sets listenITE to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
       ITEinputnum = 0;                     // Resets ITEinputnum to 0 so sendSVS will not repeat after this cycle through the void loop
       ITEtimer = millis();                 // resets ITEtimer to millis()
       MTVprevTime = millis();              // delays disconnection detection timer so it wont interrupt
@@ -625,7 +625,7 @@ void readExtron2(){
     }
 
 
-    // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMaxtrix
+    // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
     if((einput.substring(0,2) == "In" && voutMatrix[eoutput[1]+32] && !automatrixSW2) || (einput.substring(0,3) == "Rpr")){
       if(einput.substring(0,3) == "Rpr"){
         sendSVS(einput.substring(3,5).toInt()+100);
@@ -763,7 +763,7 @@ void readExtron2(){
         sendSVS(ecapbytes[5] + 79);
       }
 
-      if(ecap.substring(0,5) == "Auto_") listenITE2 = 0; // Sets listenITE2 to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
+      if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_") listenITE2 = 0; // Sets listenITE2 to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
       ITEinputnum2 = 0;                     // Resets ITEinputnum to 0 so sendSVS will not repeat after this cycle through the void loop
       ITEtimer2 = millis();                 // resets ITEtimer to millis()
       MTVprevTime2 = millis();              // delays disconnection detection timer so it wont interrupt 
