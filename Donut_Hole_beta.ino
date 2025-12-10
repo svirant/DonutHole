@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.4f
+* Donut Hole v0.4g
 * Copyright (C) 2025 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -464,43 +464,43 @@ void readExtron1(){
     if(ecap.substring(0,5) == "Auto_" || ITEinputnum > 0) MTVddSW1 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW1
-    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ITEinputnum > 0){
-      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ITEinputnum == 1){
+    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum > 0){
+      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ecapbytes[26] == 48 || ITEinputnum == 1){
         sendSVS(1);
         currentMTVinput = 1;
         MTVdiscon = false;
       }
-      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ITEinputnum == 2){
+      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ecapbytes[26] == 49 || ITEinputnum == 2){
         sendSVS(2);
         currentMTVinput = 2;
         MTVdiscon = false;
       }
-      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ITEinputnum == 3){
+      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ecapbytes[26] == 50 || ITEinputnum == 3){
         sendSVS(3);
         currentMTVinput = 3;
         MTVdiscon = false;
       }
-      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ITEinputnum == 4){
+      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ecapbytes[26] == 51 || ITEinputnum == 4){
         sendSVS(4);
         currentMTVinput = 4;
         MTVdiscon = false;
       }
-      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ITEinputnum == 5){
+      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ecapbytes[26] == 52 || ITEinputnum == 5){
         sendSVS(5);
         currentMTVinput = 5;
         MTVdiscon = false;
       }
-      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ITEinputnum == 6){
+      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ecapbytes[26] == 53 || ITEinputnum == 6){
         sendSVS(6);
         currentMTVinput = 6;
         MTVdiscon = false;
       }
-      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ITEinputnum == 7){
+      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ecapbytes[26] == 54 || ITEinputnum == 7){
         sendSVS(7);
         currentMTVinput = 7;
         MTVdiscon = false;
       }
-      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ITEinputnum == 8){
+      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ecapbytes[26] == 55 || ITEinputnum == 8){
         sendSVS(8);
         currentMTVinput = 8;
         MTVdiscon = false;
@@ -715,43 +715,43 @@ void readExtron2(){
     if(ecap.substring(0,5) == "Auto_" || ITEinputnum2 > 0) MTVddSW2 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW2
-    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ITEinputnum2 > 0){
-      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ITEinputnum2 == 1){
+    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum2 > 0){
+      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ecapbytes[26] == 48 || ITEinputnum2 == 1){
         sendSVS(101);
         currentMTVinput2 = 101;
         MTVdiscon2 = false;
       }
-      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ITEinputnum2 == 2){
+      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ecapbytes[26] == 49 || ITEinputnum2 == 2){
         sendSVS(102);
         currentMTVinput2 = 102;
         MTVdiscon2 = false;
       }
-      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ITEinputnum2 == 3){
+      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ecapbytes[26] == 50 || ITEinputnum2 == 3){
         sendSVS(103);
         currentMTVinput2 = 103;
         MTVdiscon2 = false;
       }
-      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ITEinputnum2 == 4){
+      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ecapbytes[26] == 51 || ITEinputnum2 == 4){
         sendSVS(104);
         currentMTVinput2 = 104;
         MTVdiscon2 = false;
       }
-      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ITEinputnum2 == 5){
+      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ecapbytes[26] == 52 || ITEinputnum2 == 5){
         sendSVS(105);
         currentMTVinput2 = 105;
         MTVdiscon2 = false;
       }
-      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ITEinputnum2 == 6){
+      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ecapbytes[26] == 53 || ITEinputnum2 == 6){
         sendSVS(106);
         currentMTVinput2 = 106;
         MTVdiscon2 = false;
       }
-      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ITEinputnum2 == 7){
+      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ecapbytes[26] == 54 || ITEinputnum2 == 7){
         sendSVS(107);
         currentMTVinput2 = 107;
         MTVdiscon2 = false;
       }
-      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ITEinputnum2 == 8){
+      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ecapbytes[26] == 55 || ITEinputnum2 == 8){
         sendSVS(108);
         currentMTVinput2 = 108;
         MTVdiscon2 = false;
