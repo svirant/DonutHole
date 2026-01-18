@@ -1,6 +1,6 @@
 /*
-* Donut Hole v0.4g1
-* Copyright (C) 2025 @Donutswdad
+* Donut Hole v0.5
+* Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,9 @@ bool const automatrixSW2 = false; // enable for auto matrix switching on "SW2" p
 
 int const amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
 int const amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
+
+uint8_t ExtronVideoOutputPortSW1 = 1; // For non "Plus" Extron Matrix models, must specify video output port that connects to RT4K
+uint8_t ExtronVideoOutputPortSW2 = 1; 
 
 uint8_t const vinMatrix[65] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
                                                         // set to 1 for the auto switched input to trigger a Preset on SW1
@@ -315,6 +318,10 @@ void readExtron1(){
       einput = ecap.substring(6,10);
       eoutput[0] = ecap.substring(3,5).toInt();
     }
+    if(ecap.substring(0,3) == "OUT" && !automatrixSW1){ // store only the input and output states, some Extron devices report output first instead of input
+      einput = ecap.substring(5,9);
+      eoutput[0] = ecap.substring(3,5).toInt();
+    }
     else if(ecap.substring(0,1) == "F"){ // detect if switch has changed auto/manual states
       einput = ecap.substring(4,8);
       eoutput[0] = 65;
@@ -330,6 +337,12 @@ void readExtron1(){
     else if(ecap.substring(amSizeSW1 + 7,amSizeSW1 + 10) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 7,amSizeSW1 + 12);
       eoutput[0] = 65;
+    }
+    else if(ecap.substring(0,8) == "RECONFIG"){
+      extronSerial.write("v");
+      extronSerial.write(ExtronVideoOutputPortSW1);
+      extronSerial.write("%");
+      delay(20);
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW1){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
@@ -360,7 +373,7 @@ void readExtron1(){
         previnput[0] = "0";
         setTie(1,currentInputSW1);
 
-        if(S0 && (!automatrixSW2 && (previnput[1] == "0" || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) 
+        if(S0 && (!automatrixSW2 && (previnput[1] == "0" || previnput[1] == "IN0 " || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) 
               && (!automatrixSW2 && (previnput[1] == "discon" || voutMatrix[eoutput[1]+32]))){
 
           sendSVS(currentInputSW1);
@@ -375,11 +388,11 @@ void readExtron1(){
 
 
     // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
-    if((einput.substring(0,2) == "In" && voutMatrix[eoutput[0]] && !automatrixSW1) || (einput.substring(0,3) == "Rpr")){
+    if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && voutMatrix[eoutput[0]] && !automatrixSW1) || (einput.substring(0,3) == "Rpr")){
       if(einput.substring(0,3) == "Rpr"){
         sendSVS(einput.substring(3,5).toInt());
       }
-      else if(einput != "In0 " && einput != "In00"){ // for inputs 1-99 (SVS only)
+      else if(einput != "IN0 " && einput != "In0 " && einput != "In00"){ // for inputs 1-99 (SVS only)
         if(einput.substring(3,4) == " ")
           sendSVS(einput.substring(2,3).toInt());
         else 
@@ -390,8 +403,8 @@ void readExtron1(){
 
       // Extron S0
       // when both Extron switches match In0 or In00 (no active ports), a S0 Profile can be loaded if S0 is enabled
-      if(S0 && (currentInputSW2 <= 0) && ((einput == "In0 " || einput == "In00") && 
-        (previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) && 
+      if(S0 && (currentInputSW2 <= 0) && ((einput == "IN0 " || einput == "In0 " || einput == "In00") && 
+        (previnput[1] == "IN0 " || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) && 
         voutMatrix[eoutput[0]] && (previnput[1] == "discon" || voutMatrix[eoutput[1]+32])){
 
           sendSVS(0);
@@ -401,8 +414,8 @@ void readExtron1(){
       
       } // end of Extron S0
 
-      if(previnput[0] == "0" && previnput[1].substring(0,2) == "In")previnput[0] = "In00";  // changes previnput[0] "0" state to "In00" when there is a newly active input on the other switch
-      if(previnput[1] == "0" && previnput[0].substring(0,2) == "In")previnput[1] = "In00";
+      if(previnput[0] == "0" && (previnput[1].substring(0,2) == "In" || previnput[1].substring(0,2) == "IN"))previnput[0] = "In00";  // changes previnput[0] "0" state to "In00" when there is a newly active input on the other switch
+      if(previnput[1] == "0" && (previnput[0].substring(0,2) == "In" || previnput[0].substring(0,2) == "IN"))previnput[1] = "In00";
 
     }
 
@@ -567,6 +580,10 @@ void readExtron2(){
       einput = ecap.substring(6,10);
       eoutput[1] = ecap.substring(3,5).toInt();
     }
+    if(ecap.substring(0,3) == "OUT"){ // store only the input and output states, some Extron devices report output first instead of input
+      einput = ecap.substring(5,9);
+      eoutput[1] = ecap.substring(3,5).toInt();
+    }
     else if(ecap.substring(0,1) == "F"){ // detect if switch has changed auto/manual states
       einput = ecap.substring(4,8);
       eoutput[1] = 65;
@@ -582,6 +599,12 @@ void readExtron2(){
     else if(ecap.substring(amSizeSW2 + 7,amSizeSW2 + 10) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW2 + 7,amSizeSW2 + 12);
       eoutput[1] = 65;
+    }
+    else if(ecap.substring(0,8) == "RECONFIG"){
+      extronSerial2.write("v");
+      extronSerial2.write(ExtronVideoOutputPortSW2);
+      extronSerial2.write("%");
+      delay(20);
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW2){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
@@ -611,7 +634,7 @@ void readExtron2(){
         previnput[1] = "0";
         setTie(2,currentInputSW2);  
 
-        if(S0 && (!automatrixSW1 && (previnput[0] == "0" || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) 
+        if(S0 && (!automatrixSW1 && (previnput[0] == "0" || previnput[0] == "IN0 " || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) 
               && (!automatrixSW1 && (previnput[0] == "discon" || voutMatrix[eoutput[0]]))){
 
           sendSVS(currentInputSW2);
@@ -626,11 +649,11 @@ void readExtron2(){
 
 
     // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
-    if((einput.substring(0,2) == "In" && voutMatrix[eoutput[1]+32] && !automatrixSW2) || (einput.substring(0,3) == "Rpr")){
+    if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && voutMatrix[eoutput[1]+32] && !automatrixSW2) || (einput.substring(0,3) == "Rpr")){
       if(einput.substring(0,3) == "Rpr"){
         sendSVS(einput.substring(3,5).toInt()+100);
       }
-      else if(einput != "In0 " && einput != "In00"){
+      else if(einput != "IN0" && einput != "In0 " && einput != "In00"){
         if(einput.substring(3,4) == " ") 
           sendSVS(einput.substring(2,3).toInt()+100);
         else 
@@ -641,8 +664,8 @@ void readExtron2(){
       
       // Extron2 S0
       // when both Extron switches match In0 or In00 (no active ports), a Profile 0 can be loaded if S0 is enabled
-      if(S0 && (currentInputSW1 <= 0) && ((einput == "In0 " || einput == "In00") && 
-        (previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) && 
+      if(S0 && (currentInputSW1 <= 0) && ((einput == "IN0 " || einput == "In0 " || einput == "In00") && 
+        (previnput[0] == "IN0 " || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) && 
         (previnput[0] == "discon" || voutMatrix[eoutput[0]]) && voutMatrix[eoutput[1]+32]){
 
           sendSVS(0);
@@ -652,8 +675,8 @@ void readExtron2(){
       
       } // end of Extron2 S0
 
-      if(previnput[0] == "0" && previnput[1].substring(0,2) == "In")previnput[0] = "In00";  // changes previnput[0] "0" state to "In00" when there is a newly active input on the other switch
-      if(previnput[1] == "0" && previnput[0].substring(0,2) == "In")previnput[1] = "In00";
+      if(previnput[0] == "0" && (previnput[1].substring(0,2) == "In" || previnput[1].substring(0,2) == "IN"))previnput[0] = "In00";  // changes previnput[0] "0" state to "In00" when there is a newly active input on the other switch
+      if(previnput[1] == "0" && (previnput[0].substring(0,2) == "In" || previnput[0].substring(0,2) == "IN"))previnput[1] = "In00";
 
     }
 
@@ -766,7 +789,7 @@ void readExtron2(){
       if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_") listenITE2 = 0; // Sets listenITE2 to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
       ITEinputnum2 = 0;                     // Resets ITEinputnum to 0 so sendSVS will not repeat after this cycle through the void loop
       ITEtimer2 = millis();                 // resets ITEtimer to millis()
-      MTVprevTime2 = millis();              // delays disconnection detection timer so it wont interrupt 
+      MTVprevTime2 = millis();              // delays disconnection detection timer so it wont interrupt
     }
 
     // if a MT-VIKI active port disconnection is detected, and then later a reconnection, resend the profile.
