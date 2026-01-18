@@ -13,10 +13,12 @@
 </br>
 
 > [!NOTE]
-> *NEW* 0.4c update allows:
+> *NEW* beta allows:
 > <br /> 
->   - **front case buttons/remote NOW change profiles on the MT-VIKI HDMI switch.** Thanks to [Arthrimus](https://scalablevideoswitch.com/)!
+>   - **MT-VIKI Disconnection Detection** - when an input is powered off and on, the profile is resent.
+>   - **front case buttons/remote NOW change profiles on the MT-VIKI HDMI switch.** Thanks to [Arthrimus](https://scalablevideoswitch.com/)! 
 >   - **auto-switching on Extron Matrix switchers** that support DSVP. Works with RGBS/HV and HDMI/DVI signal types.
+>   - **Support for older Extron Crosspoint (non plus) matrix switchers**
 >
 > 
 > <br /> For Matrix auto-switching, use the follow Options to enable:
