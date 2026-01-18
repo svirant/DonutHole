@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.5b
+* Donut Hole v0.5c
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -339,9 +339,9 @@ void readExtron1(){
       eoutput[0] = 65;
     }
     else if(ecap.substring(0,8) == "RECONFIG"){
-      extronSerial.write("v");
-      extronSerial.write(ExtronVideoOutputPortSW1);
-      extronSerial.write("%");
+      char cmd[10];
+      snprintf(cmd, sizeof(cmd), "v%d%%", ExtronVideoOutputPortSW1);
+      extronSerial.write(cmd);
       delay(20);
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW1){ // start of automatrix
@@ -601,9 +601,9 @@ void readExtron2(){
       eoutput[1] = 65;
     }
     else if(ecap.substring(0,8) == "RECONFIG"){
-      extronSerial2.write("v");
-      extronSerial2.write(ExtronVideoOutputPortSW2);
-      extronSerial2.write("%");
+      char cmd[10];
+      snprintf(cmd, sizeof(cmd), "v%d%%", ExtronVideoOutputPortSW2);
+      extronSerial2.write(cmd);
       delay(20);
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW2){ // start of automatrix
