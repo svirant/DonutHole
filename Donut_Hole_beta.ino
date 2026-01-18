@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.5d
+* Donut Hole v0.5e
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~311
-uint8_t const debugE2CAP = 0; // line ~553
+uint8_t const debugE1CAP = 0; // line ~305
+uint8_t const debugE2CAP = 0; // line ~573
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -339,7 +339,7 @@ void readExtron1(){
       einput = ecap.substring(amSizeSW1 + 7,amSizeSW1 + 12);
       eoutput[0] = 65;
     }
-    else if(ecap.substring(0,8) == "RECONFIG"){
+    else if(ecap.substring(0,8) == "RECONFIG"){ // this is sent everytime a change is made on older Extron Crosspoints
       char cmd[10];
       snprintf(cmd, sizeof(cmd), "v%d%%", ExtronVideoOutputPortSW1);
       extronSerial.write(cmd);
@@ -607,7 +607,7 @@ void readExtron2(){
       einput = ecap.substring(amSizeSW2 + 7,amSizeSW2 + 12);
       eoutput[1] = 65;
     }
-    else if(ecap.substring(0,8) == "RECONFIG"){
+    else if(ecap.substring(0,8) == "RECONFIG"){ // this is sent everytime a change is made on older Extron Crosspoints
       char cmd[10];
       snprintf(cmd, sizeof(cmd), "v%d%%", ExtronVideoOutputPortSW2);
       extronSerial2.write(cmd);
@@ -657,7 +657,7 @@ void readExtron2(){
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW2)
     // Without this, the profile would be resent when changes to other outputs are selected.
     if(einput.substring(0,2) == "IN"){
-      if(einput.substring(2,3).toInt() == currentProf || einput.substring(2,4).toInt() == currentProf)
+      if(einput.substring(2,3).toInt()+100 == currentProf || einput.substring(2,4).toInt()+100 == currentProf)
         einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
     }
 
