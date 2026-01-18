@@ -29,6 +29,9 @@
 > int amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
 > int amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
 >
+> uint8_t ExtronVideoOutputPortSW1 = 1; // For non "Plus" Extron Matrix models, must specify video output port that connects to RT4K
+> uint8_t ExtronVideoOutputPortSW2 = 1;
+>
 > uint8_t const vinMatrix[65] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
 >                                                       // set to 1 for the auto switched input to trigger a Preset on SW1
 >                                                       // set to 2 for the auto switched input to trigger a Preset on SW2
