@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.5c
+* Donut Hole v0.5d
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -216,6 +216,7 @@ String stack2 = "00000000000000000000000000000000";
 int currentInputSW1 = -1;
 int currentInputSW2 = -1;
 byte VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
+uint16_t currentProf = 0;
 
 // LS Time variables
 unsigned long LScurrentTime = 0; 
@@ -386,6 +387,12 @@ void readExtron1(){
       eoutput[0] = 65;
     }
 
+    // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW1)
+    // Without this, the profile would be resent when changes to other outputs are selected.
+    if(einput.substring(0,2) == "IN"){
+      if(einput.substring(2,3).toInt() == currentProf || einput.substring(2,4).toInt() == currentProf)
+        einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
+    }
 
     // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
     if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && voutMatrix[eoutput[0]] && !automatrixSW1) || (einput.substring(0,3) == "Rpr")){
@@ -647,6 +654,12 @@ void readExtron2(){
       eoutput[1] = 65;
     }
 
+    // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW2)
+    // Without this, the profile would be resent when changes to other outputs are selected.
+    if(einput.substring(0,2) == "IN"){
+      if(einput.substring(2,3).toInt() == currentProf || einput.substring(2,4).toInt() == currentProf)
+        einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
+    }
 
     // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
     if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && voutMatrix[eoutput[1]+32] && !automatrixSW2) || (einput.substring(0,3) == "Rpr")){
@@ -818,6 +831,7 @@ void sendSVS(uint16_t num){
   if(num != 0)Serial.print(num + offset);
   else Serial.print(num);
   Serial.println(F("\r"));
+  currentProf = num;
 } // end of sendSVS()
 
 void LS0time1(unsigned long eTime){
