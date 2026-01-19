@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.5h
+* Donut Hole v0.5i
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 */
 
 uint8_t const debugE1CAP = 0; // line ~305
-uint8_t const debugE2CAP = 0; // line ~582
+uint8_t const debugE2CAP = 0; // line ~579
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -341,17 +341,8 @@ void readExtron1(){
       einput = ecap.substring(amSizeSW1 + 7,amSizeSW1 + 12);
       eoutput[0] = 65;
     }
-    else if(ecap.substring(0,8) == "RECONFIG"){ // this is sent everytime a change is made on older Extron Crosspoints
-      char cmd[6];                              // Returns current input for "ExtronVideoOutputPortSW1"
-      char buff[4];
-      cmd[0] = 'v';
-      itoa(ExtronVideoOutputPortSW1,buff,10);
-      int i = 1;
-      for(char* j = buff; *j; j++){
-        cmd[i++] = *j;
-      }
-      cmd[i++] = '%';
-      extronSerial.write((uint8_t*)cmd, i);
+    else if(ecap.substring(0,8) == "RECONFIG"){     // This is sent everytime a change is made on older Extron Crosspoints
+      ExtronInputQuery(ExtronVideoOutputPortSW1,1); // Returns current input for "ExtronVideoOutputPortSW1" that is connected to port 1 of the DD
       delay(20);
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW1){ // start of automatrix
@@ -399,8 +390,14 @@ void readExtron1(){
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW1)
     // Without this, the profile would be resent when changes to other outputs are selected.
     if(einput.substring(0,2) == "IN"){
-      if(einput.substring(2,3).toInt() == currentProf || einput.substring(2,4).toInt() == currentProf)
-        einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
+      if(einput.substring(3,4) == " "){
+        if(einput.substring(2,3).toInt() == currentProf)
+          einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
+      }
+      else{
+        if(einput.substring(2,4).toInt() == currentProf)
+          einput = "XX00";
+      }
     }
 
     // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
@@ -618,17 +615,8 @@ void readExtron2(){
       einput = ecap.substring(amSizeSW2 + 7,amSizeSW2 + 12);
       eoutput[1] = 65;
     }
-    else if(ecap.substring(0,8) == "RECONFIG"){ // this is sent everytime a change is made on older Extron Crosspoints
-      char cmd[6];                              // Returns current input for "ExtronVideoOutputPortSW2"
-      char buff[4];
-      cmd[0] = 'v';
-      itoa(ExtronVideoOutputPortSW2,buff,10);
-      int i = 1;
-      for(char* j = buff; *j; j++){
-        cmd[i++] = *j;
-      }
-      cmd[i++] = '%';
-      extronSerial2.write((uint8_t*)cmd, i);
+    else if(ecap.substring(0,8) == "RECONFIG"){     // This is sent everytime a change is made on older Extron Crosspoints
+      ExtronInputQuery(ExtronVideoOutputPortSW2,2); // Returns current input for "ExtronVideoOutputPortSW2" that is connected to port 2 of the DD
       delay(20);
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW2){ // start of automatrix
@@ -675,8 +663,14 @@ void readExtron2(){
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW2)
     // Without this, the profile would be resent when changes to other outputs are selected.
     if(einput.substring(0,2) == "IN"){
-      if(einput.substring(2,3).toInt()+100 == currentProf || einput.substring(2,4).toInt()+100 == currentProf)
-        einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
+      if(einput.substring(3,4) == " "){
+        if(einput.substring(2,3).toInt()+100 == currentProf)
+          einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
+      }
+      else{
+        if(einput.substring(2,4).toInt()+100 == currentProf)
+          einput = "XX00";
+      }
     }
 
     // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
@@ -961,3 +955,19 @@ void MTVtime2(unsigned long eTime){
     delay(50);
  }
 }  // end of MTVtime2()
+
+void ExtronInputQuery(int outputNum, int DDport){
+  char cmd[6]; 
+  int len = 0;
+  cmd[len++] = 'v';
+  char buff[4];
+  itoa(outputNum,buff,10);
+  for(char* p = buff; *p; p++){
+    cmd[len++] = *p;
+  }
+  cmd[len++] = '%';
+  if(DDport == 1)
+    extronSerial.write((uint8_t*)cmd,len);
+  else if(DDport == 2)
+    extronSerial2.write((uint8_t*)cmd,len);
+} // end of ExtronInputQuery()
