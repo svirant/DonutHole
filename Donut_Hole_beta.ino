@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.5f
+* Donut Hole v0.5g
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 */
 
 uint8_t const debugE1CAP = 0; // line ~305
-uint8_t const debugE2CAP = 0; // line ~575
+uint8_t const debugE2CAP = 0; // line ~577
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -342,9 +342,11 @@ void readExtron1(){
       eoutput[0] = 65;
     }
     else if(ecap.substring(0,8) == "RECONFIG"){ // this is sent everytime a change is made on older Extron Crosspoints
-      char cmd[10];
-      snprintf(cmd, sizeof(cmd), "v%d%%", ExtronVideoOutputPortSW1);
-      extronSerial.write(cmd);
+      char buf[6];                              // Returns current input for "ExtronVideoOutputPortSW1"
+      extronSerial.write('v');
+      itoa(ExtronVideoOutputPortSW1,buf,10);
+      extronSerial.write(buf);
+      extronSerial.write('%');
       delay(20);
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW1){ // start of automatrix
@@ -612,9 +614,11 @@ void readExtron2(){
       eoutput[1] = 65;
     }
     else if(ecap.substring(0,8) == "RECONFIG"){ // this is sent everytime a change is made on older Extron Crosspoints
-      char cmd[10];
-      snprintf(cmd, sizeof(cmd), "v%d%%", ExtronVideoOutputPortSW2);
-      extronSerial2.write(cmd);
+      char buf[6];                              // Returns current input for "ExtronVideoOutputPortSW2"
+      extronSerial2.write('v');
+      itoa(ExtronVideoOutputPortSW2,buf,10);
+      extronSerial2.write(buf);
+      extronSerial2.write('%');
       delay(20);
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW2){ // start of automatrix
