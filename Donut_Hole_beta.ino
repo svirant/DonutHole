@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.5i
+* Donut Hole v0.5j
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -43,10 +43,10 @@ bool const automatrixSW2 = false; // enable for auto matrix switching on "SW2" p
 int const amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
 int const amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
 
-uint8_t ExtronVideoOutputPortSW1 = 1; // For non "Plus" Extron Matrix models, must specify video output port that connects to RT4K
+uint8_t ExtronVideoOutputPortSW1 = 1; // For older (E-series,non Plus/Ultra) Extron Matrix models, must specify the video output port that connects to RT4K
 uint8_t ExtronVideoOutputPortSW2 = 1; 
 
-uint8_t const vinMatrix[65] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
+uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
                                                         // set to 1 for the auto switched input to trigger a Preset on SW1
                                                         // set to 2 for the auto switched input to trigger a Preset on SW2
                                                         // set to 3 for both SW1 & SW2
@@ -122,7 +122,7 @@ uint8_t const vinMatrix[65] = {0,  // MATRIX switchers  // When auto matrix mode
                            32,  // 2ND MATRIX SWITCH input 32
                            };
                                                         
-uint8_t const voutMatrix[66] = {1,  // MATRIX switchers // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
+uint8_t const voutMatrix[] = {1,  // MATRIX switchers // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
                                                         // set to 1 for the auto switched input to go to ALL outputs (default)
                                                         // set to 0 to select outputs to be enabled/disabled as listed below
                                                         //
@@ -210,12 +210,12 @@ AltSoftSerial extronSerial2; // setup yet another serial port for listening to S
 // Extron Global variables
 String previnput[2] = {"discon","discon"}; // used to keep track of previous input
 uint8_t eoutput[2]; // used to store Extron output
-String const sstack = "00000000000000000000000000000000"; // static stack of 32 "0" used for comparisons
-String stack1 = "00000000000000000000000000000000"; 
-String stack2 = "00000000000000000000000000000000"; 
+char const sstack[] = "00000000000000000000000000000000"; // static stack of 32 "0" used for comparisons
+char stack1[] = "00000000000000000000000000000000"; 
+char stack2[] = "00000000000000000000000000000000"; 
 int currentInputSW1 = -1;
 int currentInputSW2 = -1;
-byte VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
+byte const VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
 uint16_t currentProf = 0;
 
 // LS Time variables
@@ -367,8 +367,8 @@ void readExtron1(){
           }
         }
       } //end of for loop
-      if(einput.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) 
-        && stack1.substring(0,amSizeSW1) == sstack.substring(0,amSizeSW1) && currentInputSW1 != 0){ // check for all inputs being off
+      if(einput.substring(0,amSizeSW1) == String(sstack).substring(0,amSizeSW1) 
+        && String(stack1).substring(0,amSizeSW1) == String(sstack).substring(0,amSizeSW1) && currentInputSW1 != 0){ // check for all inputs being off
 
         currentInputSW1 = 0;
         previnput[0] = "0";
@@ -640,8 +640,8 @@ void readExtron2(){
           }
         }
       } //end of for loop
-      if(einput.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) 
-        && stack2.substring(0,amSizeSW2) == sstack.substring(0,amSizeSW2) && currentInputSW2 != 0){ // check for all inputs being off
+      if(einput.substring(0,amSizeSW2) == String(sstack).substring(0,amSizeSW2) 
+        && String(stack2).substring(0,amSizeSW2) == String(sstack).substring(0,amSizeSW2) && currentInputSW2 != 0){ // check for all inputs being off
         
         currentInputSW2 = 0;
         previnput[1] = "0";
@@ -956,9 +956,9 @@ void MTVtime2(unsigned long eTime){
  }
 }  // end of MTVtime2()
 
-void ExtronInputQuery(int outputNum, int DDport){
+void ExtronInputQuery(uint8_t outputNum, uint8_t DDport){
   char cmd[6]; 
-  int len = 0;
+  uint8_t len = 0;
   cmd[len++] = 'v';
   char buff[4];
   itoa(outputNum,buff,10);
@@ -967,7 +967,7 @@ void ExtronInputQuery(int outputNum, int DDport){
   }
   cmd[len++] = '%';
   if(DDport == 1)
-    extronSerial.write((uint8_t*)cmd,len);
+    extronSerial.write((uint8_t *)cmd,len);
   else if(DDport == 2)
-    extronSerial2.write((uint8_t*)cmd,len);
+    extronSerial2.write((uint8_t *)cmd,len);
 } // end of ExtronInputQuery()
