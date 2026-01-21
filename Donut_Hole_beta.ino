@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.5j
+* Donut Hole v0.5k
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~305
-uint8_t const debugE2CAP = 0; // line ~579
+uint8_t const debugE1CAP = 0; // line ~295
+uint8_t const debugE2CAP = 0; // line ~568
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -50,7 +50,7 @@ uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode i
                                                         // set to 1 for the auto switched input to trigger a Preset on SW1
                                                         // set to 2 for the auto switched input to trigger a Preset on SW2
                                                         // set to 3 for both SW1 & SW2
-                                                        // set to 0 to disable this feature (default - aka input goes to all outputs unless defined in voutMatrix)
+                                                        // set to 0 to disable this feature (default - input goes to all outputs)
                                                         //
                                                         // set the following inputs to the desired Preset #
                                                         // (by default each input # is set to the same corresponding Preset #)
@@ -122,13 +122,11 @@ uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode i
                            32,  // 2ND MATRIX SWITCH input 32
                            };
                                                         
-uint8_t const voutMatrix[] = {1,  // MATRIX switchers // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
-                                                        // set to 1 for the auto switched input to go to ALL outputs (default)
-                                                        // set to 0 to select outputs to be enabled/disabled as listed below
+uint8_t const voutMatrix[65] = {1,  // MATRIX switchers   //  ** AutoMatrix mode ignores this setting **
                                                         //
-                                                        // When auto matrix mode is disabled: 
                                                         // ALL input changes to any/all outputs result in a profile change
                                                         // disable specific outputs from triggering profile changes
+                                                        // 
                            1,  // output 1 SW1 (1 = enabled, 0 = disabled)
                            1,  // output 2
                            1,  // output 3
@@ -195,7 +193,6 @@ uint8_t const voutMatrix[] = {1,  // MATRIX switchers // When auto matrix mode i
                            1,  // 2ND MATRIX SWITCH output 30
                            1,  // 2ND MATRIX SWITCH output 31
                            1,  // 2ND MATRIX SWITCH output 32 (1 = enabled, 0 = disabled)
-                           1,  // leave set to 1
                            };
                            
 ////////////////////////////////////////////////////////////////////////
@@ -215,8 +212,11 @@ char stack1[] = "00000000000000000000000000000000";
 char stack2[] = "00000000000000000000000000000000"; 
 int currentInputSW1 = -1;
 int currentInputSW2 = -1;
-byte const VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
 uint16_t currentProf = 0;
+byte const VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
+
+// MT-VIKI serial command
+byte viki[4] = {0xA5,0x5A,0x00,0xCC};
 
 // LS Time variables
 unsigned long LScurrentTime = 0; 
@@ -229,16 +229,6 @@ unsigned long MTVcurrentTime = 0;
 unsigned long MTVcurrentTime2 = 0;
 unsigned long MTVprevTime = 0;
 unsigned long MTVprevTime2 = 0;
-
-// MT-VIKI serial commands
-byte const viki1[4] = {0xA5,0x5A,0x00,0xCC};
-byte const viki2[4] = {0xA5,0x5A,0x01,0xCC};
-byte const viki3[4] = {0xA5,0x5A,0x02,0xCC};
-byte const viki4[4] = {0xA5,0x5A,0x03,0xCC};
-byte const viki5[4] = {0xA5,0x5A,0x04,0xCC};
-byte const viki6[4] = {0xA5,0x5A,0x05,0xCC};
-byte const viki7[4] = {0xA5,0x5A,0x06,0xCC};
-byte const viki8[4] = {0xA5,0x5A,0x07,0xCC};
 
 // VIKI Manual Switch variables
 unsigned long sendtimer = 0;
@@ -295,7 +285,7 @@ void readExtron1(){
     if(MTVddSW1){            // if a MT-VIKI switch has been detected on SW1, then the currently active MT-VIKI hdmi port is checked for disconnection
       MTVtime1(1500);
     }else if(automatrixSW1){ // if automatrixSW1 is set "true" in options, then "0LS" is sent every 250ms to see if an input has changed
-      LS0time1(250);
+      LS0time1(500);
     }
 
     // listens to the Extron sw1 Port for changes
@@ -327,23 +317,22 @@ void readExtron1(){
     }
     else if(ecap.substring(0,1) == "F"){ // detect if switch has changed auto/manual states
       einput = ecap.substring(4,8);
-      eoutput[0] = 65;
+      eoutput[0] = 0;
     }
     else if(ecap.substring(0,3) == "Rpr"){ // detect if a Preset has been used
       einput = ecap.substring(0,5);
-      eoutput[0] = 65;
+      eoutput[0] = 0;
     }
     else if(ecap.substring(amSizeSW1 + 6,amSizeSW1 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 6,amSizeSW1 + 11);
-      eoutput[0] = 65;
+      eoutput[0] = 0;
     }
     else if(ecap.substring(amSizeSW1 + 7,amSizeSW1 + 10) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 7,amSizeSW1 + 12);
-      eoutput[0] = 65;
+      eoutput[0] = 0;
     }
-    else if(ecap.substring(0,8) == "RECONFIG"){     // This is sent everytime a change is made on older Extron Crosspoints
-      ExtronInputQuery(ExtronVideoOutputPortSW1,1); // Returns current input for "ExtronVideoOutputPortSW1" that is connected to port 1 of the DD
-      delay(20);
+    else if(ecap.substring(0,8) == "RECONFIG"){      // This is received everytime a change is made on older Extron Crosspoints
+      ExtronOutputQuery(ExtronVideoOutputPortSW1,1); // Read current input for "ExtronVideoOutputPortSW1" that is connected to port 1 of the DD
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW1){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
@@ -357,10 +346,10 @@ void readExtron1(){
             currentInputSW1 = i+1;
             if(vinMatrix[0] == 1 || vinMatrix[0] == 3)
             {
-              recallPreset(1,vinMatrix[currentInputSW1]);
+              recallPreset(vinMatrix[currentInputSW1],1);
             }
-            else{
-              setTie(1,currentInputSW1);
+            else if(vinMatrix[0] == 0){
+              setTie(currentInputSW1,1);
               sendSVS(currentInputSW1);
             }
 
@@ -384,7 +373,7 @@ void readExtron1(){
     } // end of automatrix
     else{                             // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
-      eoutput[0] = 65;
+      eoutput[0] = 0;
     }
 
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW1)
@@ -487,7 +476,7 @@ void readExtron1(){
       sendtimer = millis();                     // resets sendtimer to millis()
     }
 
-    if(ecap.substring(0,5) == "Auto_" || ITEinputnum > 0) MTVddSW1 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
+    if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum > 0) MTVddSW1 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW1
     if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum > 0){
@@ -570,7 +559,7 @@ void readExtron2(){
     if(MTVddSW2){            // if a MT-VIKI switch has been detected on SW2, then the currently active MT-VIKI hdmi port is checked for disconnection
       MTVtime2(1500);
     }else if(automatrixSW2){ // if automatrixSW2 is set "true" in options, then "0LS" is sent every 250ms to see if an input has changed
-      LS0time2(250);
+      LS0time2(500);
     }
 
     // listens to the Extron sw2 Port for changes
@@ -601,23 +590,22 @@ void readExtron2(){
     }
     else if(ecap.substring(0,1) == "F"){ // detect if switch has changed auto/manual states
       einput = ecap.substring(4,8);
-      eoutput[1] = 65;
+      eoutput[1] = 0;
     }
     else if(ecap.substring(0,3) == "Rpr"){ // detect if a Preset has been used
       einput = ecap.substring(0,5);
-      eoutput[1] = 65;
+      eoutput[1] = 0;
     }
     else if(ecap.substring(amSizeSW2 + 6,amSizeSW2 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW2 + 6,amSizeSW2 + 11);
-      eoutput[1] = 65;
+      eoutput[1] = 0;
     }
     else if(ecap.substring(amSizeSW2 + 7,amSizeSW2 + 10) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW2 + 7,amSizeSW2 + 12);
-      eoutput[1] = 65;
+      eoutput[1] = 0;
     }
-    else if(ecap.substring(0,8) == "RECONFIG"){     // This is sent everytime a change is made on older Extron Crosspoints
-      ExtronInputQuery(ExtronVideoOutputPortSW2,2); // Returns current input for "ExtronVideoOutputPortSW2" that is connected to port 2 of the DD
-      delay(20);
+    else if(ecap.substring(0,8) == "RECONFIG"){     // This is received everytime a change is made on older Extron Crosspoints
+      ExtronOutputQuery(ExtronVideoOutputPortSW2,2); // Read current input for "ExtronVideoOutputPortSW2" that is connected to port 2 of the DD
     }
     else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW2){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
@@ -631,10 +619,10 @@ void readExtron2(){
             currentInputSW2 = i+1;
             if(vinMatrix[0] == 2 || vinMatrix[0] == 3)
             {
-              recallPreset(2,vinMatrix[currentInputSW2 + 32]);
+              recallPreset(vinMatrix[currentInputSW2 + 32],2);
             }
-            else{
-              setTie(2,currentInputSW2);
+            else if(vinMatrix[0] == 0){
+              setTie(currentInputSW2,2);
               sendSVS(currentInputSW2 + 100);
             }
           }
@@ -657,7 +645,7 @@ void readExtron2(){
     } // end of automatrix
     else{                              // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
-      eoutput[1] = 65;
+      eoutput[1] = 0;
     }
 
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW2)
@@ -760,7 +748,7 @@ void readExtron2(){
       sendtimer2 = millis();                     // resets sendtimer2 to millis()
     }
 
-    if(ecap.substring(0,5) == "Auto_" || ITEinputnum2 > 0) MTVddSW2 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
+    if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum2 > 0) MTVddSW2 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW2
     if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum2 > 0){
@@ -870,44 +858,22 @@ void LS0time2(unsigned long eTime){
  }
 }  // end of LS0time2()
 
-void setTie(uint8_t sw, uint8_t num){
+void setTie(uint8_t num, uint8_t sw){
   if(sw == 1){
-    if(voutMatrix[0]){
       extronSerial.print(num);
       extronSerial.print(F("*"));
       extronSerial.print(F("!"));
-    }
-    else{
-      for(int i=1;i<(amSizeSW1 + 1);i++){
-        if(voutMatrix[i]){
-          extronSerial.print(num);
-          extronSerial.print(F("*"));
-          extronSerial.print(i);
-          extronSerial.print(F("!"));
-        }
-      }
-    }
   }
   else if(sw == 2){
-    if(voutMatrix[0]){
       extronSerial2.print(num);
       extronSerial2.print(F("*"));
       extronSerial2.print(F("!"));
-    }
-    else{
-      for(int i=33;i<(amSizeSW2 + 33);i++){
-        if(voutMatrix[i]){
-          extronSerial2.print(num);
-          extronSerial2.print(F("*"));
-          extronSerial2.print(i - 32);
-          extronSerial2.print(F("!"));
-        }
-      }
-    }
   }
+
+  delay(20);
 } // end of setTie()
 
-void recallPreset(uint8_t sw, uint8_t num){
+void recallPreset(uint8_t num, uint8_t sw){
   if(sw == 1){
     extronSerial.print(num);
     extronSerial.print(F("."));
@@ -916,6 +882,8 @@ void recallPreset(uint8_t sw, uint8_t num){
     extronSerial2.print(num);
     extronSerial2.print(F("."));
   }
+
+  delay(20);
 } // end of recallPreset()
 
 void MTVtime1(unsigned long eTime){
@@ -925,14 +893,7 @@ void MTVtime1(unsigned long eTime){
   if((MTVcurrentTime - MTVprevTime) >= eTime){ // If it's been longer than eTime, send MT-VIKI serial command for current input, see if it responds with disconnected, and reset the timer.
     MTVcurrentTime = 0;
     MTVprevTime = 0;
-    if(currentMTVinput == 1) extronSerial.write(viki1,4);
-    else if(currentMTVinput == 2) extronSerial.write(viki2,4);
-    else if(currentMTVinput == 3) extronSerial.write(viki3,4);
-    else if(currentMTVinput == 4) extronSerial.write(viki4,4);
-    else if(currentMTVinput == 5) extronSerial.write(viki5,4);
-    else if(currentMTVinput == 6) extronSerial.write(viki6,4);
-    else if(currentMTVinput == 7) extronSerial.write(viki7,4);
-    else if(currentMTVinput == 8) extronSerial.write(viki8,4);
+    extronSerialEwrite("viki",currentMTVinput,1);
     delay(50);
  }
 }  // end of MTVtime1()
@@ -944,19 +905,12 @@ void MTVtime2(unsigned long eTime){
   if((MTVcurrentTime2 - MTVprevTime2) >= eTime){ // If it's been longer than eTime, send MT-VIKI serial command for current input, see if it responds with disconnected, and reset the timer.
     MTVcurrentTime2 = 0;
     MTVprevTime2 = 0;
-    if(currentMTVinput2 == 101) extronSerial2.write(viki1,4);
-    else if(currentMTVinput2 == 102) extronSerial2.write(viki2,4);
-    else if(currentMTVinput2 == 103) extronSerial2.write(viki3,4);
-    else if(currentMTVinput2 == 104) extronSerial2.write(viki4,4);
-    else if(currentMTVinput2 == 105) extronSerial2.write(viki5,4);
-    else if(currentMTVinput2 == 106) extronSerial2.write(viki6,4);
-    else if(currentMTVinput2 == 107) extronSerial2.write(viki7,4);
-    else if(currentMTVinput2 == 108) extronSerial2.write(viki8,4);
+    extronSerialEwrite("viki",currentMTVinput2 - 100,2);
     delay(50);
  }
 }  // end of MTVtime2()
 
-void ExtronInputQuery(uint8_t outputNum, uint8_t DDport){
+void ExtronOutputQuery(uint8_t outputNum, uint8_t sw){
   char cmd[6]; 
   uint8_t len = 0;
   cmd[len++] = 'v';
@@ -966,8 +920,21 @@ void ExtronInputQuery(uint8_t outputNum, uint8_t DDport){
     cmd[len++] = *p;
   }
   cmd[len++] = '%';
-  if(DDport == 1)
+  if(sw == 1)
     extronSerial.write((uint8_t *)cmd,len);
-  else if(DDport == 2)
+  else if(sw == 2)
     extronSerial2.write((uint8_t *)cmd,len);
-} // end of ExtronInputQuery()
+
+  delay(20);
+} // end of ExtronOutputQuery()
+
+void extronSerialEwrite(String type, uint8_t value, uint8_t sw){
+  if(type == "viki"){
+    viki[2] = byte(value - 1);
+    if(sw == 1)
+      extronSerial.write(viki, 4);
+    else if(sw == 2)
+      extronSerial2.write(viki, 4);
+  }
+  delay(20);
+}  // end of extronSerialEwrite()
