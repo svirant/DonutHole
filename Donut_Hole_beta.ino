@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.5k
+* Donut Hole beta v0.6
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~295
-uint8_t const debugE2CAP = 0; // line ~568
+uint8_t const debugE1CAP = 0; // line ~232
+uint8_t const debugE2CAP = 0; // line ~512
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -37,8 +37,8 @@ bool S0 = false;         // (Profile 0)
                          // ** Does not work with MT-VIKI / TESmart HDMI switches **
 
 // For Extron Matrix switches that support DSVP. RGBS and HDMI/DVI video types.
-bool const automatrixSW1 = false; // enable for auto matrix switching on "SW1" port
-bool const automatrixSW2 = false; // enable for auto matrix switching on "SW2" port
+#define automatrixSW1 false // set true for auto matrix switching on "SW1" port
+#define automatrixSW2 false // set true for auto matrix switching on "SW2" port
 
 int const amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
 int const amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
@@ -46,13 +46,12 @@ int const amSizeSW2 = 8; // number of input ports for auto matrix switching on S
 uint8_t ExtronVideoOutputPortSW1 = 1; // For older (E-series,non Plus/Ultra) Extron Matrix models, must specify the video output port that connects to RT4K
 uint8_t ExtronVideoOutputPortSW2 = 1; 
 
-uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
-                                                        // set to 1 for the auto switched input to trigger a Preset on SW1
-                                                        // set to 2 for the auto switched input to trigger a Preset on SW2
-                                                        // set to 3 for both SW1 & SW2
-                                                        // set to 0 to disable this feature (default - input goes to all outputs)
+uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 defined above)
+                                                        // set to 0 for the auto switched input to tie to all outputs
+                                                        // set to 1 for the auto switched input to trigger a Preset
+                                                        // set to 2 for the auto switched input to tie to "ExtronVideoOutputPortSW1" / "ExtronVideoOutputPortSW2"
                                                         //
-                                                        // set the following inputs to the desired Preset #
+                                                        // For option 1, set the following inputs to the desired Preset #
                                                         // (by default each input # is set to the same corresponding Preset #)
                            1,  // input 1 SW1
                            2,  // input 2
@@ -84,8 +83,8 @@ uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode i
                            28,  // input 28
                            29,  // input 29
                            30,  // input 30
-                           31,  // input 31
-                           32,  // input 32
+                           30,  // input 31
+                           30,  // input 32
                                //
                                // ONLY USE FOR 2ND MATRIX SWITCH on SW2
                            1,  // 2ND MATRIX SWITCH input 1 SW2
@@ -118,82 +117,10 @@ uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode i
                            28,  // 2ND MATRIX SWITCH input 28
                            29,  // 2ND MATRIX SWITCH input 29
                            30,  // 2ND MATRIX SWITCH input 30
-                           31,  // 2ND MATRIX SWITCH input 31
-                           32,  // 2ND MATRIX SWITCH input 32
+                           30,  // 2ND MATRIX SWITCH input 31
+                           30,  // 2ND MATRIX SWITCH input 32
                            };
-                                                        
-uint8_t const voutMatrix[65] = {1,  // MATRIX switchers   //  ** AutoMatrix mode ignores this setting **
-                                                        //
-                                                        // ALL input changes to any/all outputs result in a profile change
-                                                        // disable specific outputs from triggering profile changes
-                                                        // 
-                           1,  // output 1 SW1 (1 = enabled, 0 = disabled)
-                           1,  // output 2
-                           1,  // output 3
-                           1,  // output 4
-                           1,  // output 5
-                           1,  // output 6
-                           1,  // output 7
-                           1,  // output 8
-                           1,  // output 9
-                           1,  // output 10
-                           1,  // output 11
-                           1,  // output 12
-                           1,  // output 13
-                           1,  // output 14
-                           1,  // output 15
-                           1,  // output 16
-                           1,  // output 17
-                           1,  // output 18
-                           1,  // output 19
-                           1,  // output 20
-                           1,  // output 21
-                           1,  // output 22
-                           1,  // output 23
-                           1,  // output 24
-                           1,  // output 25
-                           1,  // output 26
-                           1,  // output 27
-                           1,  // output 28
-                           1,  // output 29
-                           1,  // output 30
-                           1,  // output 31
-                           1,  // output 32 (1 = enabled, 0 = disabled)
-                               //
-                               // ONLY USE FOR 2ND MATRIX SWITCH on SW2
-                           1,  // 2ND MATRIX SWITCH output 1 SW2 (1 = enabled, 0 = disabled)
-                           1,  // 2ND MATRIX SWITCH output 2
-                           1,  // 2ND MATRIX SWITCH output 3
-                           1,  // 2ND MATRIX SWITCH output 4
-                           1,  // 2ND MATRIX SWITCH output 5
-                           1,  // 2ND MATRIX SWITCH output 6
-                           1,  // 2ND MATRIX SWITCH output 7
-                           1,  // 2ND MATRIX SWITCH output 8
-                           1,  // 2ND MATRIX SWITCH output 9
-                           1,  // 2ND MATRIX SWITCH output 10
-                           1,  // 2ND MATRIX SWITCH output 11
-                           1,  // 2ND MATRIX SWITCH output 12
-                           1,  // 2ND MATRIX SWITCH output 13
-                           1,  // 2ND MATRIX SWITCH output 14
-                           1,  // 2ND MATRIX SWITCH output 15
-                           1,  // 2ND MATRIX SWITCH output 16
-                           1,  // 2ND MATRIX SWITCH output 17
-                           1,  // 2ND MATRIX SWITCH output 18
-                           1,  // 2ND MATRIX SWITCH output 19
-                           1,  // 2ND MATRIX SWITCH output 20
-                           1,  // 2ND MATRIX SWITCH output 21
-                           1,  // 2ND MATRIX SWITCH output 22
-                           1,  // 2ND MATRIX SWITCH output 23
-                           1,  // 2ND MATRIX SWITCH output 24
-                           1,  // 2ND MATRIX SWITCH output 25
-                           1,  // 2ND MATRIX SWITCH output 26
-                           1,  // 2ND MATRIX SWITCH output 27
-                           1,  // 2ND MATRIX SWITCH output 28
-                           1,  // 2ND MATRIX SWITCH output 29
-                           1,  // 2ND MATRIX SWITCH output 30
-                           1,  // 2ND MATRIX SWITCH output 31
-                           1,  // 2ND MATRIX SWITCH output 32 (1 = enabled, 0 = disabled)
-                           };
+
                            
 ////////////////////////////////////////////////////////////////////////
 
@@ -224,17 +151,23 @@ unsigned long LScurrentTime2 = 0;
 unsigned long LSprevTime = 0;
 unsigned long LSprevTime2 = 0;
 
+#if !automatrixSW1
 // MT-VIKI Time variables
 unsigned long MTVcurrentTime = 0; 
-unsigned long MTVcurrentTime2 = 0;
 unsigned long MTVprevTime = 0;
+unsigned long sendtimer = 0;
+unsigned long ITEtimer = 0;
+#endif
+
+#if !automatrixSW2
+// MT-VIKI Time variables
+unsigned long MTVcurrentTime2 = 0;
 unsigned long MTVprevTime2 = 0;
+unsigned long sendtimer2 = 0;
+unsigned long ITEtimer2 = 0;
+#endif
 
 // VIKI Manual Switch variables
-unsigned long sendtimer = 0;
-unsigned long sendtimer2 = 0;
-unsigned long ITEtimer = 0;
-unsigned long ITEtimer2 = 0;
 uint8_t ITEstatus[] = {3,0,0};
 uint8_t ITEstatus2[] = {3,0,0};
 bool ITErecv = 0;
@@ -282,11 +215,15 @@ void readExtron1(){
     String ecap = "0000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
     String einput = "0000000000000000000000000000000000000000"; // used to store Extron input
 
-    if(MTVddSW1){            // if a MT-VIKI switch has been detected on SW1, then the currently active MT-VIKI hdmi port is checked for disconnection
-      MTVtime1(1500);
-    }else if(automatrixSW1){ // if automatrixSW1 is set "true" in options, then "0LS" is sent every 250ms to see if an input has changed
+    if(automatrixSW1){ // if automatrixSW1 is set "true" in options, then "0LS" is sent every 500ms to see if an input has changed
       LS0time1(500);
     }
+
+#if !automatrixSW1  
+    if(MTVddSW1){            // if a MT-VIKI switch has been detected on SW1, then the currently active MT-VIKI hdmi port is checked for disconnection
+      MTVtime1(1500);
+    }
+#endif
 
     // listens to the Extron sw1 Port for changes
     // SIS Command Responses reference - Page 77 https://media.extron.com/public/download/files/userman/XP300_Matrix_B.pdf
@@ -307,29 +244,31 @@ void readExtron1(){
 
     if((ecap.substring(0,3) == "Out" || ecap.substring(0,3) == "OUT") && !automatrixSW1){ // store only the input and output states, some Extron devices report output first instead of input
       if(ecap.substring(4,5) == " "){
-        eoutput[0] = ecap.substring(3,4).toInt();
         einput = ecap.substring(5,9);
+        if(ecap.substring(3,4).toInt() == ExtronVideoOutputPortSW1) eoutput[0] = 1;
+        else eoutput[0] = 0;
       }
       else{
-        eoutput[0] = ecap.substring(3,5).toInt();
         einput = ecap.substring(6,10);
+        if(ecap.substring(3,5).toInt() == ExtronVideoOutputPortSW1) eoutput[0] = 1;
+        else eoutput[0] = 0;
       }
     }
     else if(ecap.substring(0,1) == "F"){ // detect if switch has changed auto/manual states
       einput = ecap.substring(4,8);
-      eoutput[0] = 0;
+      eoutput[0] = 1;
     }
     else if(ecap.substring(0,3) == "Rpr"){ // detect if a Preset has been used
       einput = ecap.substring(0,5);
-      eoutput[0] = 0;
+      eoutput[0] = 1;
     }
     else if(ecap.substring(amSizeSW1 + 6,amSizeSW1 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 6,amSizeSW1 + 11);
-      eoutput[0] = 0;
+      eoutput[0] = 1;
     }
     else if(ecap.substring(amSizeSW1 + 7,amSizeSW1 + 10) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 7,amSizeSW1 + 12);
-      eoutput[0] = 0;
+      eoutput[0] = 1;
     }
     else if(ecap.substring(0,8) == "RECONFIG"){      // This is received everytime a change is made on older Extron Crosspoints
       ExtronOutputQuery(ExtronVideoOutputPortSW1,1); // Read current input for "ExtronVideoOutputPortSW1" that is connected to port 1 of the DD
@@ -344,11 +283,10 @@ void readExtron1(){
           stack1[i] = einput[i];
           if(einput[i] != '0'){
             currentInputSW1 = i+1;
-            if(vinMatrix[0] == 1 || vinMatrix[0] == 3)
-            {
+            if(vinMatrix[0] == 1){
               recallPreset(vinMatrix[currentInputSW1],1);
             }
-            else if(vinMatrix[0] == 0){
+            else if(vinMatrix[0] == 0 || vinMatrix[0] == 2){
               setTie(currentInputSW1,1);
               sendSVS(currentInputSW1);
             }
@@ -364,7 +302,7 @@ void readExtron1(){
         setTie(1,currentInputSW1);
 
         if(S0 && (!automatrixSW2 && (previnput[1] == "0" || previnput[1] == "IN0 " || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) 
-              && (!automatrixSW2 && (previnput[1] == "discon" || voutMatrix[eoutput[1]+32]))){
+              && (!automatrixSW2 && (previnput[1] == "discon" || eoutput[1]))){
 
           sendSVS(currentInputSW1);
         }
@@ -373,7 +311,7 @@ void readExtron1(){
     } // end of automatrix
     else{                             // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
-      eoutput[0] = 0;
+      eoutput[0] = 1;
     }
 
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW1)
@@ -389,8 +327,8 @@ void readExtron1(){
       }
     }
 
-    // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
-    if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && voutMatrix[eoutput[0]] && !automatrixSW1) || (einput.substring(0,3) == "Rpr")){
+    // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references eoutput[0]
+    if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && eoutput[0] && !automatrixSW1) || (einput.substring(0,3) == "Rpr")){
       if(einput.substring(0,3) == "Rpr"){
         sendSVS(einput.substring(3,5).toInt());
       }
@@ -407,7 +345,7 @@ void readExtron1(){
       // when both Extron switches match In0 or In00 (no active ports), a S0 Profile can be loaded if S0 is enabled
       if(S0 && (currentInputSW2 <= 0) && ((einput == "IN0 " || einput == "In0 " || einput == "In00") && 
         (previnput[1] == "IN0 " || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) && 
-        voutMatrix[eoutput[0]] && (previnput[1] == "discon" || voutMatrix[eoutput[1]+32])){
+        eoutput[0] && (previnput[1] == "discon" || eoutput[1])){
 
           sendSVS(0);
 
@@ -421,6 +359,7 @@ void readExtron1(){
 
     }
 
+#if !automatrixSW1
     // VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
     // ** hdmi output must be connected when powering on switch for ITE messages to appear, thus manual button detection working **
 
@@ -542,8 +481,7 @@ void readExtron1(){
       MTVdiscon = false;
       sendSVS(currentMTVinput);
     }
-
-
+#endif
     // set ecapbytes to 0 for next read
     memset(ecapbytes,0,sizeof(ecapbytes)); // ecapbytes is local variable, but superstitious clearing regardless :) 
 
@@ -556,11 +494,16 @@ void readExtron2(){
     String ecap = "0000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
     String einput = "0000000000000000000000000000000000000000"; // used to store Extron input
 
-    if(MTVddSW2){            // if a MT-VIKI switch has been detected on SW2, then the currently active MT-VIKI hdmi port is checked for disconnection
-      MTVtime2(1500);
-    }else if(automatrixSW2){ // if automatrixSW2 is set "true" in options, then "0LS" is sent every 250ms to see if an input has changed
+    if(automatrixSW2){ // if automatrixSW2 is set "true" in options, then "0LS" is sent every 500ms to see if an input has changed
       LS0time2(500);
     }
+
+#if !automatrixSW2
+    if(MTVddSW2){            // if a MT-VIKI switch has been detected on SW2, then the currently active MT-VIKI hdmi port is checked for disconnection
+      MTVtime2(1500);
+    }
+#endif
+
 
     // listens to the Extron sw2 Port for changes
     if(extronSerial2.available() > 0){ // if there is data available for reading, read
@@ -580,29 +523,31 @@ void readExtron2(){
 
     if((ecap.substring(0,3) == "Out" || ecap.substring(0,3) == "OUT") && !automatrixSW2){ // store only the input and output states, some Extron devices report output first instead of input
       if(ecap.substring(4,5) == " "){
-        eoutput[1] = ecap.substring(3,4).toInt();
         einput = ecap.substring(5,9);
+        if(ecap.substring(3,4).toInt() == ExtronVideoOutputPortSW2) eoutput[1] = 1;
+        else eoutput[1] = 0;
       }
       else{
-        eoutput[1] = ecap.substring(3,5).toInt();
         einput = ecap.substring(6,10);
+        if(ecap.substring(3,5).toInt() == ExtronVideoOutputPortSW2) eoutput[1] = 1;
+        else eoutput[1] = 0;
       }
     }
     else if(ecap.substring(0,1) == "F"){ // detect if switch has changed auto/manual states
       einput = ecap.substring(4,8);
-      eoutput[1] = 0;
+      eoutput[1] = 1;
     }
     else if(ecap.substring(0,3) == "Rpr"){ // detect if a Preset has been used
       einput = ecap.substring(0,5);
-      eoutput[1] = 0;
+      eoutput[1] = 1;
     }
     else if(ecap.substring(amSizeSW2 + 6,amSizeSW2 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW2 + 6,amSizeSW2 + 11);
-      eoutput[1] = 0;
+      eoutput[1] = 1;
     }
     else if(ecap.substring(amSizeSW2 + 7,amSizeSW2 + 10) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW2 + 7,amSizeSW2 + 12);
-      eoutput[1] = 0;
+      eoutput[1] = 1;
     }
     else if(ecap.substring(0,8) == "RECONFIG"){     // This is received everytime a change is made on older Extron Crosspoints
       ExtronOutputQuery(ExtronVideoOutputPortSW2,2); // Read current input for "ExtronVideoOutputPortSW2" that is connected to port 2 of the DD
@@ -617,11 +562,10 @@ void readExtron2(){
           stack2[i] = einput[i];
           if(einput[i] != '0'){
             currentInputSW2 = i+1;
-            if(vinMatrix[0] == 2 || vinMatrix[0] == 3)
-            {
+            if(vinMatrix[0] == 1){
               recallPreset(vinMatrix[currentInputSW2 + 32],2);
             }
-            else if(vinMatrix[0] == 0){
+            else if(vinMatrix[0] == 0 || vinMatrix[0] == 2){
               setTie(currentInputSW2,2);
               sendSVS(currentInputSW2 + 100);
             }
@@ -636,7 +580,7 @@ void readExtron2(){
         setTie(2,currentInputSW2);  
 
         if(S0 && (!automatrixSW1 && (previnput[0] == "0" || previnput[0] == "IN0 " || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) 
-              && (!automatrixSW1 && (previnput[0] == "discon" || voutMatrix[eoutput[0]]))){
+              && (!automatrixSW1 && (previnput[0] == "discon" || eoutput[0]))){
 
           sendSVS(currentInputSW2);
         }
@@ -645,7 +589,7 @@ void readExtron2(){
     } // end of automatrix
     else{                              // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
-      eoutput[1] = 0;
+      eoutput[1] = 1;
     }
 
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW2)
@@ -661,8 +605,8 @@ void readExtron2(){
       }
     }
 
-    // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references voutMatrix
-    if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && voutMatrix[eoutput[1]+32] && !automatrixSW2) || (einput.substring(0,3) == "Rpr")){
+    // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references eoutput[1]
+    if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && eoutput[1] && !automatrixSW2) || (einput.substring(0,3) == "Rpr")){
       if(einput.substring(0,3) == "Rpr"){
         sendSVS(einput.substring(3,5).toInt()+100);
       }
@@ -679,7 +623,7 @@ void readExtron2(){
       // when both Extron switches match In0 or In00 (no active ports), a Profile 0 can be loaded if S0 is enabled
       if(S0 && (currentInputSW1 <= 0) && ((einput == "IN0 " || einput == "In0 " || einput == "In00") && 
         (previnput[0] == "IN0 " || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) && 
-        (previnput[0] == "discon" || voutMatrix[eoutput[0]]) && voutMatrix[eoutput[1]+32]){
+        (previnput[0] == "discon" || eoutput[0]) && eoutput[1]){
 
           sendSVS(0);
 
@@ -694,6 +638,7 @@ void readExtron2(){
     }
 
 
+#if !automatrixSW2
     // VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
     // ** hdmi output must be connected when powering on switch for ITE messages to appear, thus manual button detection working **
 
@@ -813,8 +758,7 @@ void readExtron2(){
       MTVdiscon2 = false;
       sendSVS(currentMTVinput2);
     }
-
-
+#endif
     // set ecapbytes to 0 for next read
     memset(ecapbytes,0,sizeof(ecapbytes)); // ecapbytes is local variable, but superstitious clearing regardless :) 
 
@@ -860,17 +804,31 @@ void LS0time2(unsigned long eTime){
 
 void setTie(uint8_t num, uint8_t sw){
   if(sw == 1){
+    if(vinMatrix[0] == 0){
       extronSerial.print(num);
       extronSerial.print(F("*"));
       extronSerial.print(F("!"));
+    }
+    else if(vinMatrix[0] == 2){
+      extronSerial.print(num);
+      extronSerial.print(F("*"));
+      extronSerial.print(ExtronVideoOutputPortSW1);
+      extronSerial.print(F("!"));
+    }
   }
   else if(sw == 2){
+    if(vinMatrix[0] == 0){
       extronSerial2.print(num);
       extronSerial2.print(F("*"));
       extronSerial2.print(F("!"));
+    }
+    else if(vinMatrix[0] == 2){
+      extronSerial2.print(num);
+      extronSerial2.print(F("*"));
+      extronSerial2.print(ExtronVideoOutputPortSW2);
+      extronSerial2.print(F("!"));
+    }
   }
-
-  delay(20);
 } // end of setTie()
 
 void recallPreset(uint8_t num, uint8_t sw){
@@ -886,6 +844,7 @@ void recallPreset(uint8_t num, uint8_t sw){
   delay(20);
 } // end of recallPreset()
 
+#if !automatrixSW1
 void MTVtime1(unsigned long eTime){
   MTVcurrentTime = millis();  // Init timer
   if(MTVprevTime == 0)       // If previous timer not initialized, do so now.
@@ -897,7 +856,9 @@ void MTVtime1(unsigned long eTime){
     delay(50);
  }
 }  // end of MTVtime1()
+#endif
 
+#if !automatrixSW2
 void MTVtime2(unsigned long eTime){
   MTVcurrentTime2 = millis();  // Init timer
   if(MTVprevTime2 == 0)       // If previous timer not initialized, do so now.
@@ -909,6 +870,7 @@ void MTVtime2(unsigned long eTime){
     delay(50);
  }
 }  // end of MTVtime2()
+#endif
 
 void ExtronOutputQuery(uint8_t outputNum, uint8_t sw){
   char cmd[6]; 
