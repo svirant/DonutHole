@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6
+* Donut Hole beta v0.6a
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -20,14 +20,27 @@
 #include <AltSoftSerial.h>  // https://github.com/PaulStoffregen/AltSoftSerial in order to have a 3rd Serial port for SW2
                             // Step 1 - Goto the github link above. Click the GREEN "<> Code" box and "Download ZIP"
                             // Step 2 - In Arudino IDE; goto "Sketch" -> "Include Library" -> "Add .ZIP Library"
+
+#define EXTRON1 0
+#define EXTRON2 1
+
+struct profileorder {
+  int Prof;
+  uint8_t On;
+  uint8_t King;
+};
+
+profileorder mswitch[2] = {{0,0,0},{0,0,0}};
+uint8_t mswitchSize = 2;
+
 /*
 ////////////////////
 //    OPTIONS    //
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~232
-uint8_t const debugE2CAP = 0; // line ~512
+uint8_t const debugE1CAP = 0; // line ~239
+uint8_t const debugE2CAP = 0; // line ~499
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -132,14 +145,13 @@ SoftwareSerial extronSerial = SoftwareSerial(3,4); // setup a software serial po
 AltSoftSerial extronSerial2; // setup yet another serial port for listening to SW2. hardcoded to pins D8 / D9
 
 // Extron Global variables
-String previnput[2] = {"discon","discon"}; // used to keep track of previous input
 uint8_t eoutput[2]; // used to store Extron output
 char const sstack[] = "00000000000000000000000000000000"; // static stack of 32 "0" used for comparisons
 char stack1[] = "00000000000000000000000000000000"; 
 char stack2[] = "00000000000000000000000000000000"; 
 int currentInputSW1 = -1;
 int currentInputSW2 = -1;
-uint16_t currentProf = 0;
+int currentProf = 0;
 byte const VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
 
 // MT-VIKI serial command
@@ -170,16 +182,11 @@ unsigned long ITEtimer2 = 0;
 // VIKI Manual Switch variables
 uint8_t ITEstatus[] = {3,0,0};
 uint8_t ITEstatus2[] = {3,0,0};
-bool ITErecv = 0;
-bool ITErecv2 = 0;
-bool listenITE = 1;
-bool listenITE2 = 1;
-uint8_t ITEinputnum = 0;
-uint8_t ITEinputnum2 = 0;
-uint8_t currentMTVinput = 0;
-uint8_t currentMTVinput2 = 0;
-bool MTVdiscon = false;
-bool MTVdiscon2 = false;
+bool ITErecv[2] = {0,0};
+bool listenITE[2] = {1,1};
+uint8_t ITEinputnum[2] = {0,0};
+uint8_t currentMTVinput[2] = {0,0};
+bool MTVdiscon[2] = {false,false};
 bool MTVddSW1 = false;
 bool MTVddSW2 = false;
 
@@ -288,7 +295,7 @@ void readExtron1(){
             }
             else if(vinMatrix[0] == 0 || vinMatrix[0] == 2){
               setTie(currentInputSW1,1);
-              sendSVS(currentInputSW1);
+              sendProfile(currentInputSW1,EXTRON1,1);
             }
 
           }
@@ -298,14 +305,8 @@ void readExtron1(){
         && String(stack1).substring(0,amSizeSW1) == String(sstack).substring(0,amSizeSW1) && currentInputSW1 != 0){ // check for all inputs being off
 
         currentInputSW1 = 0;
-        previnput[0] = "0";
         setTie(1,currentInputSW1);
-
-        if(S0 && (!automatrixSW2 && (previnput[1] == "0" || previnput[1] == "IN0 " || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) 
-              && (!automatrixSW2 && (previnput[1] == "discon" || eoutput[1]))){
-
-          sendSVS(currentInputSW1);
-        }
+        sendProfile(0,EXTRON1,1);
 
       }
     } // end of automatrix
@@ -330,47 +331,33 @@ void readExtron1(){
     // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references eoutput[0]
     if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && eoutput[0] && !automatrixSW1) || (einput.substring(0,3) == "Rpr")){
       if(einput.substring(0,3) == "Rpr"){
-        sendSVS(einput.substring(3,5).toInt());
+        sendProfile(einput.substring(3,5).toInt(),EXTRON1,1);
       }
       else if(einput != "IN0 " && einput != "In0 " && einput != "In00"){ // for inputs 1-99 (SVS only)
         if(einput.substring(3,4) == " ")
-          sendSVS(einput.substring(2,3).toInt());
+          sendProfile(einput.substring(2,3).toInt(),EXTRON1,1);
         else 
-          sendSVS(einput.substring(2,4).toInt());
+          sendProfile(einput.substring(2,4).toInt(),EXTRON1,1);
+      }
+      else if(einput == "IN0" || einput == "In0 " || einput == "In00"){
+        sendProfile(0,EXTRON1,1);
       }
 
-      previnput[0] = einput;
-
-      // Extron S0
-      // when both Extron switches match In0 or In00 (no active ports), a S0 Profile can be loaded if S0 is enabled
-      if(S0 && (currentInputSW2 <= 0) && ((einput == "IN0 " || einput == "In0 " || einput == "In00") && 
-        (previnput[1] == "IN0 " || previnput[1] == "In0 " || previnput[1] == "In00" || previnput[1] == "discon")) && 
-        eoutput[0] && (previnput[1] == "discon" || eoutput[1])){
-
-          sendSVS(0);
-
-        previnput[0] = "0";
-        if(previnput[1] != "discon")previnput[1] = "0";
-      
-      } // end of Extron S0
-
-      if(previnput[0] == "0" && (previnput[1].substring(0,2) == "In" || previnput[1].substring(0,2) == "IN"))previnput[0] = "In00";  // changes previnput[0] "0" state to "In00" when there is a newly active input on the other switch
-      if(previnput[1] == "0" && (previnput[0].substring(0,2) == "In" || previnput[0].substring(0,2) == "IN"))previnput[1] = "In00";
-
     }
+
 
 #if !automatrixSW1
     // VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
     // ** hdmi output must be connected when powering on switch for ITE messages to appear, thus manual button detection working **
 
     if(millis() - ITEtimer > 1200){  // Timer that re-enables sending SVS serial commands using the ITE mux data after an autoswitch command (prevents duplicate commands)
-      listenITE = 1;  // Sets listenITE to 1 so the ITE mux data can be used to send SVS serial commands again
-      ITErecv = 0; // Turns off ITErecv so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
+      listenITE[0] = 1;  // Sets listenITE[0] to 1 so the ITE mux data can be used to send SVS serial commands again
+      ITErecv[0] = 0; // Turns off ITErecv[0] so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
       ITEtimer = millis(); // Resets timer to current millis() count to disable this function once the variables have been updated
     }
 
 
-    if((ecap.substring(0,3) == "==>" || ecap.substring(15,18) == "==>") && listenITE){   // checks if the serial command from the VIKI starts with "==>" This indicates that the command is an ITE mux status message
+    if((ecap.substring(0,3) == "==>" || ecap.substring(15,18) == "==>") && listenITE[0]){   // checks if the serial command from the VIKI starts with "==>" This indicates that the command is an ITE mux status message
       if(ecap.substring(10,11) == "P"){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus[0] = ecap.substring(11,12).toInt();
       }
@@ -390,84 +377,84 @@ void readExtron1(){
         ITEstatus[2] = ecap.substring(27,28).toInt();
       }
 
-      ITErecv = 1;                            // sets ITErecv to 1 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
+      ITErecv[0] = 1;                            // sets ITErecv[0] to 1 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
       sendtimer = millis();                   // resets sendtimer to millis() 
       ITEtimer = millis();                    // resets ITEtimer to millis()
       MTVprevTime = millis();                 // delays disconnection detection timer so it wont interrupt
     }
 
 
-    if((millis() - sendtimer > 300) && ITErecv){ // wait 300ms to make sure all ITE messages are received in order to complete ITEstatus
+    if((millis() - sendtimer > 300) && ITErecv[0]){ // wait 300ms to make sure all ITE messages are received in order to complete ITEstatus
       if(ITEstatus[0] == 3){                   // Checks if port 3 of the IT6635 chip is currently selected
-        if(ITEstatus[1] == 2) ITEinputnum = 1;   // Checks if port 2 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 1
-        else if(ITEstatus[1] == 1) ITEinputnum = 2;   // Checks if port 1 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 2
-        else if(ITEstatus[1] == 0) ITEinputnum = 3;   // Checks if port 0 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 3
+        if(ITEstatus[1] == 2) ITEinputnum[0] = 1;   // Checks if port 2 of the IT66353 DEV0 chip is selected, Sets ITEinputnum[0] to input 1
+        else if(ITEstatus[1] == 1) ITEinputnum[0] = 2;   // Checks if port 1 of the IT66353 DEV0 chip is selected, Sets ITEinputnum[0] to input 2
+        else if(ITEstatus[1] == 0) ITEinputnum[0] = 3;   // Checks if port 0 of the IT66353 DEV0 chip is selected, Sets ITEinputnum[0] to input 3
       }
       else if(ITEstatus[0] == 2){                 // Checks if port 2 of the IT6635 chip is currently selected
-        if(ITEstatus[2] == 2) ITEinputnum = 4;   // Checks if port 2 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 4
-        else if(ITEstatus[2] == 1) ITEinputnum = 5;   // Checks if port 1 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 5
-        else if(ITEstatus[2] == 0) ITEinputnum = 6;   // Checks if port 0 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 6
+        if(ITEstatus[2] == 2) ITEinputnum[0] = 4;   // Checks if port 2 of the IT66353 DEV1 chip is selected, Sets ITEinputnum[0] to input 4
+        else if(ITEstatus[2] == 1) ITEinputnum[0] = 5;   // Checks if port 1 of the IT66353 DEV1 chip is selected, Sets ITEinputnum[0] to input 5
+        else if(ITEstatus[2] == 0) ITEinputnum[0] = 6;   // Checks if port 0 of the IT66353 DEV1 chip is selected, Sets ITEinputnum[0] to input 6
       }
-      else if(ITEstatus[0] == 1) ITEinputnum = 7;   // Checks if port 1 of the IT6635 chip is currently selected, Sets ITEinputnum to input 7
-      else if(ITEstatus[0] == 0) ITEinputnum = 8;   // Checks if port 0 of the IT6635 chip is currently selected, Sets ITEinputnum to input 8
+      else if(ITEstatus[0] == 1) ITEinputnum[0] = 7;   // Checks if port 1 of the IT6635 chip is currently selected, Sets ITEinputnum[0] to input 7
+      else if(ITEstatus[0] == 0) ITEinputnum[0] = 8;   // Checks if port 0 of the IT6635 chip is currently selected, Sets ITEinputnum[0] to input 8
       
-      ITErecv = 0;                              // Turns off ITErecv so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
+      ITErecv[0] = 0;                              // Turns off ITErecv[0] so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
       sendtimer = millis();                     // resets sendtimer to millis()
     }
 
-    if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum > 0) MTVddSW1 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
+    if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum[0] > 0) MTVddSW1 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW1
-    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum > 0){
-      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ecapbytes[26] == 48 || ITEinputnum == 1){
-        sendSVS(1);
-        currentMTVinput = 1;
-        MTVdiscon = false;
+    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum[0] > 0){
+      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ecapbytes[26] == 48 || ITEinputnum[0] == 1){
+        sendProfile(1,EXTRON1,1);
+        currentMTVinput[0] = 1;
+        MTVdiscon[0] = false;
       }
-      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ecapbytes[26] == 49 || ITEinputnum == 2){
-        sendSVS(2);
-        currentMTVinput = 2;
-        MTVdiscon = false;
+      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ecapbytes[26] == 49 || ITEinputnum[0] == 2){
+        sendProfile(2,EXTRON1,1);
+        currentMTVinput[0] = 2;
+        MTVdiscon[0] = false;
       }
-      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ecapbytes[26] == 50 || ITEinputnum == 3){
-        sendSVS(3);
-        currentMTVinput = 3;
-        MTVdiscon = false;
+      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ecapbytes[26] == 50 || ITEinputnum[0] == 3){
+        sendProfile(3,EXTRON1,1);
+        currentMTVinput[0] = 3;
+        MTVdiscon[0] = false;
       }
-      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ecapbytes[26] == 51 || ITEinputnum == 4){
-        sendSVS(4);
-        currentMTVinput = 4;
-        MTVdiscon = false;
+      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ecapbytes[26] == 51 || ITEinputnum[0] == 4){
+        sendProfile(4,EXTRON1,1);
+        currentMTVinput[0] = 4;
+        MTVdiscon[0] = false;
       }
-      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ecapbytes[26] == 52 || ITEinputnum == 5){
-        sendSVS(5);
-        currentMTVinput = 5;
-        MTVdiscon = false;
+      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ecapbytes[26] == 52 || ITEinputnum[0] == 5){
+        sendProfile(5,EXTRON1,1);
+        currentMTVinput[0] = 5;
+        MTVdiscon[0] = false;
       }
-      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ecapbytes[26] == 53 || ITEinputnum == 6){
-        sendSVS(6);
-        currentMTVinput = 6;
-        MTVdiscon = false;
+      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ecapbytes[26] == 53 || ITEinputnum[0] == 6){
+        sendProfile(6,EXTRON1,1);
+        currentMTVinput[0] = 6;
+        MTVdiscon[0] = false;
       }
-      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ecapbytes[26] == 54 || ITEinputnum == 7){
-        sendSVS(7);
-        currentMTVinput = 7;
-        MTVdiscon = false;
+      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ecapbytes[26] == 54 || ITEinputnum[0] == 7){
+        sendProfile(7,EXTRON1,1);
+        currentMTVinput[0] = 7;
+        MTVdiscon[0] = false;
       }
-      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ecapbytes[26] == 55 || ITEinputnum == 8){
-        sendSVS(8);
-        currentMTVinput = 8;
-        MTVdiscon = false;
+      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ecapbytes[26] == 55 || ITEinputnum[0] == 8){
+        sendProfile(8,EXTRON1,1);
+        currentMTVinput[0] = 8;
+        MTVdiscon[0] = false;
       }
       else if(ecapbytes[6] > 29 && ecapbytes[6] < 38){
-        sendSVS(ecapbytes[6] - 21);
+        sendProfile(ecapbytes[6] - 21,EXTRON1,1);
       }
       else if(ecapbytes[5] > 29 && ecapbytes[5] < 38){
-        sendSVS(ecapbytes[5] - 21);
+        sendProfile(ecapbytes[5] - 21,EXTRON1,1);
       }
 
-      if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_") listenITE = 0; // Sets listenITE to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
-      ITEinputnum = 0;                     // Resets ITEinputnum to 0 so sendSVS will not repeat after this cycle through the void loop
+      if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_") listenITE[0] = 0; // Sets listenITE[0] to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
+      ITEinputnum[0] = 0;                     // Resets ITEinputnum[0] to 0 so sendSVS will not repeat after this cycle through the void loop
       ITEtimer = millis();                 // resets ITEtimer to millis()
       MTVprevTime = millis();              // delays disconnection detection timer so it wont interrupt
      }
@@ -475,11 +462,12 @@ void readExtron1(){
     
     // if a MT-VIKI active port disconnection is detected, and then later a reconnection, resend the profile.
     if(ecap.substring(24,41) == "IS_NON_INPUT_PORT"){
-      MTVdiscon = true;
+      MTVdiscon[0] = true;
+      sendProfile(0,EXTRON1,0);
     }
-    else if(ecap.substring(24,41) != "IS_NON_INPUT_PORT" && ecap.substring(0,11) == "Uart_RxData" && MTVdiscon){
-      MTVdiscon = false;
-      sendSVS(currentMTVinput);
+    else if(ecap.substring(24,41) != "IS_NON_INPUT_PORT" && ecap.substring(0,11) == "Uart_RxData" && MTVdiscon[0]){
+      MTVdiscon[0] = false;
+      sendProfile(currentMTVinput[0],EXTRON1,0);
     }
 #endif
     // set ecapbytes to 0 for next read
@@ -576,14 +564,8 @@ void readExtron2(){
         && String(stack2).substring(0,amSizeSW2) == String(sstack).substring(0,amSizeSW2) && currentInputSW2 != 0){ // check for all inputs being off
         
         currentInputSW2 = 0;
-        previnput[1] = "0";
-        setTie(2,currentInputSW2);  
-
-        if(S0 && (!automatrixSW1 && (previnput[0] == "0" || previnput[0] == "IN0 " || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) 
-              && (!automatrixSW1 && (previnput[0] == "discon" || eoutput[0]))){
-
-          sendSVS(currentInputSW2);
-        }
+        setTie(currentInputSW2,2);
+        sendProfile(0,EXTRON2,1);
 
       }
     } // end of automatrix
@@ -608,32 +590,17 @@ void readExtron2(){
     // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references eoutput[1]
     if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && eoutput[1] && !automatrixSW2) || (einput.substring(0,3) == "Rpr")){
       if(einput.substring(0,3) == "Rpr"){
-        sendSVS(einput.substring(3,5).toInt()+100);
+        sendProfile(einput.substring(3,5).toInt()+100,EXTRON2,1);
       }
       else if(einput != "IN0" && einput != "In0 " && einput != "In00"){
         if(einput.substring(3,4) == " ") 
-          sendSVS(einput.substring(2,3).toInt()+100);
+          sendProfile(einput.substring(2,3).toInt()+100,EXTRON2,1);
         else 
-          sendSVS(einput.substring(2,4).toInt()+100);
+          sendProfile(einput.substring(2,4).toInt()+100,EXTRON2,1);
       }
-
-      previnput[1] = einput;
-      
-      // Extron2 S0
-      // when both Extron switches match In0 or In00 (no active ports), a Profile 0 can be loaded if S0 is enabled
-      if(S0 && (currentInputSW1 <= 0) && ((einput == "IN0 " || einput == "In0 " || einput == "In00") && 
-        (previnput[0] == "IN0 " || previnput[0] == "In0 " || previnput[0] == "In00" || previnput[0] == "discon")) && 
-        (previnput[0] == "discon" || eoutput[0]) && eoutput[1]){
-
-          sendSVS(0);
-
-        previnput[1] = "0";
-        if(previnput[0] != "discon")previnput[0] = "0";
-      
-      } // end of Extron2 S0
-
-      if(previnput[0] == "0" && (previnput[1].substring(0,2) == "In" || previnput[1].substring(0,2) == "IN"))previnput[0] = "In00";  // changes previnput[0] "0" state to "In00" when there is a newly active input on the other switch
-      if(previnput[1] == "0" && (previnput[0].substring(0,2) == "In" || previnput[0].substring(0,2) == "IN"))previnput[1] = "In00";
+      else if(einput == "IN0" || einput == "In0 " || einput == "In00"){
+        sendProfile(0,EXTRON2,1);
+      }
 
     }
 
@@ -643,13 +610,13 @@ void readExtron2(){
     // ** hdmi output must be connected when powering on switch for ITE messages to appear, thus manual button detection working **
 
     if(millis() - ITEtimer2 > 1200){  // Timer that re-enables sending SVS serial commands using the ITE mux data after an autoswitch command (prevents duplicate commands)
-      listenITE2 = 1;  // Sets listenITE2 to 1 so the ITE mux data can be used to send SVS serial commands again
-      ITErecv2 = 0; // Turns off ITErecv2 so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
+      listenITE[1] = 1;  // Sets listenITE[1] to 1 so the ITE mux data can be used to send SVS serial commands again
+      ITErecv[1] = 0; // Turns off ITErecv[1] so the SVS serial commands are not repeated if an autoswitch command preceeded the ITE commands
       ITEtimer2 = millis(); // Resets timer to current millis() count to disable this function once the variables hav been updated
     }
 
 
-    if((ecap.substring(0,3) == "==>" || ecap.substring(15,18) == "==>") && listenITE2){   // checks if the serial command from the VIKI starts with "==>" This indicates that the command is an ITE mux status message
+    if((ecap.substring(0,3) == "==>" || ecap.substring(15,18) == "==>") && listenITE[1]){   // checks if the serial command from the VIKI starts with "==>" This indicates that the command is an ITE mux status message
       if(ecap.substring(10,11) == "P"){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus2[0] = ecap.substring(11,12).toInt();
       }
@@ -668,95 +635,104 @@ void readExtron2(){
       if(ecap.substring(33,35) == ">1"){       // checks the value of the IT66535 IC that points to Dev->1. P2 is input 4 / P1 is input 5 / P0 is input 6
         ITEstatus2[2] = ecap.substring(27,28).toInt();
       }
-      ITErecv2 = 1;                             // sets ITErecv2 to 1 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
+      ITErecv[1] = 1;                             // sets ITErecv[1] to 1 indicating that an ITE message has been received and an SVS command can be sent once the sendtimer elapses
       sendtimer2 = millis();                    // resets sendtimer2 to millis()
       ITEtimer2 = millis();                    // resets ITEtimer2 to millis()
       MTVprevTime2 = millis();                 // delays disconnection detection timer so it wont interrupt
     }
 
 
-    if((millis() - sendtimer2 > 300) && ITErecv2){ // wait 300ms to make sure all ITE messages are received in order to complete ITEstatus
+    if((millis() - sendtimer2 > 300) && ITErecv[1]){ // wait 300ms to make sure all ITE messages are received in order to complete ITEstatus
       if(ITEstatus2[0] == 3){                   // Checks if port 3 of the IT6635 chip is currently selected
-        if(ITEstatus2[1] == 2) ITEinputnum2 = 1;   // Checks if port 2 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 1
-        else if(ITEstatus2[1] == 1) ITEinputnum2 = 2;   // Checks if port 1 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 2
-        else if(ITEstatus2[1] == 0) ITEinputnum2 = 3;   // Checks if port 0 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 3
+        if(ITEstatus2[1] == 2) ITEinputnum[1] = 1;   // Checks if port 2 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 1
+        else if(ITEstatus2[1] == 1) ITEinputnum[1] = 2;   // Checks if port 1 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 2
+        else if(ITEstatus2[1] == 0) ITEinputnum[1] = 3;   // Checks if port 0 of the IT66353 DEV0 chip is selected, Sets ITEinputnum to input 3
       }
       else if(ITEstatus2[0] == 2){                 // Checks if port 2 of the IT6635 chip is currently selected
-        if(ITEstatus2[2] == 2) ITEinputnum2 = 4;   // Checks if port 2 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 4
-        else if(ITEstatus2[2] == 1) ITEinputnum2 = 5;   // Checks if port 1 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 5
-        else if(ITEstatus2[2] == 0) ITEinputnum2 = 6;   // Checks if port 0 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 6
+        if(ITEstatus2[2] == 2) ITEinputnum[1] = 4;   // Checks if port 2 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 4
+        else if(ITEstatus2[2] == 1) ITEinputnum[1] = 5;   // Checks if port 1 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 5
+        else if(ITEstatus2[2] == 0) ITEinputnum[1] = 6;   // Checks if port 0 of the IT66353 DEV1 chip is selected, Sets ITEinputnum to input 6
       }
-      else if(ITEstatus2[0] == 1) ITEinputnum2 = 7;   // Checks if port 1 of the IT6635 chip is currently selected, Sets ITEinputnum to input 7
-      else if(ITEstatus2[0] == 0) ITEinputnum2 = 8;   // Checks if port 0 of the IT6635 chip is currently selected, Sets ITEinputnum to input 8
+      else if(ITEstatus2[0] == 1) ITEinputnum[1] = 7;   // Checks if port 1 of the IT6635 chip is currently selected, Sets ITEinputnum to input 7
+      else if(ITEstatus2[0] == 0) ITEinputnum[1] = 8;   // Checks if port 0 of the IT6635 chip is currently selected, Sets ITEinputnum to input 8
 
-      ITErecv2 = 0;                              // sets ITErecv2 to 0 to prevent the message from being resent
+      ITErecv[1] = 0;                              // sets ITErecv[1] to 0 to prevent the message from being resent
       sendtimer2 = millis();                     // resets sendtimer2 to millis()
     }
 
-    if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum2 > 0) MTVddSW2 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
+    if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum[1] > 0) MTVddSW2 = true; // enable MT-VIKI disconnection detection if MT-VIKI switch is present
 
     // for TESmart 4K60 / TESmart 4K30 / MT-VIKI HDMI switch on SW2
-    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum2 > 0){
-      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ecapbytes[26] == 48 || ITEinputnum2 == 1){
-        sendSVS(101);
-        currentMTVinput2 = 101;
-        MTVdiscon2 = false;
+    if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum[1] > 0){
+      if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ecapbytes[26] == 48 || ITEinputnum[1] == 1){
+        sendProfile(101,EXTRON2,1);
+
+        currentMTVinput[1] = 101;
+        MTVdiscon[1] = false;
       }
-      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ecapbytes[26] == 49 || ITEinputnum2 == 2){
-        sendSVS(102);
-        currentMTVinput2 = 102;
-        MTVdiscon2 = false;
+      else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ecapbytes[26] == 49 || ITEinputnum[1] == 2){
+        sendProfile(102,EXTRON2,1);
+
+        currentMTVinput[1] = 102;
+        MTVdiscon[1] = false;
       }
-      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ecapbytes[26] == 50 || ITEinputnum2 == 3){
-        sendSVS(103);
-        currentMTVinput2 = 103;
-        MTVdiscon2 = false;
+      else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ecapbytes[26] == 50 || ITEinputnum[1] == 3){
+        sendProfile(103,EXTRON2,1);
+
+        currentMTVinput[1] = 103;
+        MTVdiscon[1] = false;
       }
-      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ecapbytes[26] == 51 || ITEinputnum2 == 4){
-        sendSVS(104);
-        currentMTVinput2 = 104;
-        MTVdiscon2 = false;
+      else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ecapbytes[26] == 51 || ITEinputnum[1] == 4){
+        sendProfile(104,EXTRON2,1);
+
+        currentMTVinput[1] = 104;
+        MTVdiscon[1] = false;
       }
-      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ecapbytes[26] == 52 || ITEinputnum2 == 5){
-        sendSVS(105);
-        currentMTVinput2 = 105;
-        MTVdiscon2 = false;
+      else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ecapbytes[26] == 52 || ITEinputnum[1] == 5){
+        sendProfile(105,EXTRON2,1);
+
+        currentMTVinput[1] = 105;
+        MTVdiscon[1] = false;
       }
-      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ecapbytes[26] == 53 || ITEinputnum2 == 6){
-        sendSVS(106);
-        currentMTVinput2 = 106;
-        MTVdiscon2 = false;
+      else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ecapbytes[26] == 53 || ITEinputnum[1] == 6){
+        sendProfile(106,EXTRON2,1);
+
+        currentMTVinput[1] = 106;
+        MTVdiscon[1] = false;
       }
-      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ecapbytes[26] == 54 || ITEinputnum2 == 7){
-        sendSVS(107);
-        currentMTVinput2 = 107;
-        MTVdiscon2 = false;
+      else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ecapbytes[26] == 54 || ITEinputnum[1] == 7){
+        sendProfile(107,EXTRON2,1);
+
+        currentMTVinput[1] = 107;
+        MTVdiscon[1] = false;
       }
-      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ecapbytes[26] == 55 || ITEinputnum2 == 8){
-        sendSVS(108);
-        currentMTVinput2 = 108;
-        MTVdiscon2 = false;
+      else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ecapbytes[26] == 55 || ITEinputnum[1] == 8){
+        sendProfile(108,EXTRON2,1);
+
+        currentMTVinput[1] = 108;
+        MTVdiscon[1] = false;
       }
       else if(ecapbytes[6] > 29 && ecapbytes[6] < 38){
-        sendSVS(ecapbytes[6] + 79);
+        sendProfile(ecapbytes[6] + 79,EXTRON2,1);
       }
       else if(ecapbytes[5] > 29 && ecapbytes[5] < 38){
-        sendSVS(ecapbytes[5] + 79);
+        sendProfile(ecapbytes[5] + 79,EXTRON2,1);
       }
 
-      if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_") listenITE2 = 0; // Sets listenITE2 to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
-      ITEinputnum2 = 0;                     // Resets ITEinputnum to 0 so sendSVS will not repeat after this cycle through the void loop
+      if(ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_") listenITE[1] = 0; // Sets listenITE[1] to 0 so the ITE mux data will be ignored while an autoswitch command is detected.
+      ITEinputnum[1] = 0;                     // Resets ITEinputnum to 0 so sendSVS will not repeat after this cycle through the void loop
       ITEtimer2 = millis();                 // resets ITEtimer to millis()
       MTVprevTime2 = millis();              // delays disconnection detection timer so it wont interrupt
     }
 
     // if a MT-VIKI active port disconnection is detected, and then later a reconnection, resend the profile.
     if(ecap.substring(24,41) == "IS_NON_INPUT_PORT"){
-      MTVdiscon2 = true;
+      MTVdiscon[1] = true;
+      sendProfile(0,EXTRON2,1);
     }
-    else if(ecap.substring(24,41) != "IS_NON_INPUT_PORT" && ecap.substring(0,11) == "Uart_RxData" && MTVdiscon2){
-      MTVdiscon2 = false;
-      sendSVS(currentMTVinput2);
+    else if(ecap.substring(24,41) != "IS_NON_INPUT_PORT" && ecap.substring(0,11) == "Uart_RxData" && MTVdiscon[1]){
+      MTVdiscon[1] = false;
+      sendProfile(currentMTVinput[1],EXTRON2,1);
     }
 #endif
     // set ecapbytes to 0 for next read
@@ -852,7 +828,7 @@ void MTVtime1(unsigned long eTime){
   if((MTVcurrentTime - MTVprevTime) >= eTime){ // If it's been longer than eTime, send MT-VIKI serial command for current input, see if it responds with disconnected, and reset the timer.
     MTVcurrentTime = 0;
     MTVprevTime = 0;
-    extronSerialEwrite("viki",currentMTVinput,1);
+    extronSerialEwrite("viki",currentMTVinput[0],1);
     delay(50);
  }
 }  // end of MTVtime1()
@@ -866,7 +842,7 @@ void MTVtime2(unsigned long eTime){
   if((MTVcurrentTime2 - MTVprevTime2) >= eTime){ // If it's been longer than eTime, send MT-VIKI serial command for current input, see if it responds with disconnected, and reset the timer.
     MTVcurrentTime2 = 0;
     MTVprevTime2 = 0;
-    extronSerialEwrite("viki",currentMTVinput2 - 100,2);
+    extronSerialEwrite("viki",currentMTVinput[1] - 100,2);
     delay(50);
  }
 }  // end of MTVtime2()
@@ -887,7 +863,7 @@ void ExtronOutputQuery(uint8_t outputNum, uint8_t sw){
   else if(sw == 2)
     extronSerial2.write((uint8_t *)cmd,len);
 
-  delay(20);
+  delay(50);
 } // end of ExtronOutputQuery()
 
 void extronSerialEwrite(String type, uint8_t value, uint8_t sw){
@@ -898,5 +874,51 @@ void extronSerialEwrite(String type, uint8_t value, uint8_t sw){
     else if(sw == 2)
       extronSerial2.write(viki, 4);
   }
-  delay(20);
+  delay(50);
 }  // end of extronSerialEwrite()
+
+void sendProfile(int sprof, uint8_t sname, uint8_t soverride){
+  if(sprof != 0){
+    mswitch[sname].On = 1;
+    mswitch[sname].Prof = sprof;
+    if(soverride == 1){
+      mswitch[sname].King = 1;
+    }
+    else{
+      if(mswitch[sname].Prof != currentProf){
+        mswitch[sname].King = 1;
+      }
+      else return;
+    }
+    for(int i=0;i < mswitchSize;i++){ // set previous King to 0
+      if(i != sname && mswitch[i].King == 1)
+        mswitch[i].King = 0;
+    }
+    sendSVS(mswitch[sname].Prof);
+  }
+  else if(sprof == 0){ // all inputs are off, set attributes to 0, find a console that is On starting at the top of the list, set as King, send profile
+    mswitch[sname].On = 0;
+    mswitch[sname].Prof = 33333;
+    if(mswitch[sname].King == 1){
+      for(uint8_t k=0;k < mswitchSize;k++){
+        if(sname == k){
+          mswitch[k].King = 0;
+          for(uint8_t l=0;l < mswitchSize;l++){ // find next Switch that has an active console
+            if(mswitch[l].On == 1){
+              mswitch[l].King = 1;
+              sendSVS(mswitch[l].Prof);
+              break;
+            }
+          }
+        }
+      } // end of for()
+    } // end of if King == 1
+    uint8_t count = 0;
+    for(uint8_t m=0;m < mswitchSize;m++){
+      if(mswitch[m].On == 0) count++;
+    }
+    if(S0 && (count == mswitchSize) && currentProf != 0){ // of S0 is true, send S0 or "remote prof12" when all consoles are off
+      sendSVS(0);
+    }  
+  } // end of else if prof == 0
+} // end of sendProfile()
