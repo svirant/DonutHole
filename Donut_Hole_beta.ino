@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6a
+* Donut Hole beta v0.6b
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -39,12 +39,12 @@ uint8_t mswitchSize = 2;
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~239
-uint8_t const debugE2CAP = 0; // line ~499
+uint8_t const debugE1CAP = 0; // line ~241
+uint8_t const debugE2CAP = 0; // line ~490
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
-bool S0 = false;         // (Profile 0) 
+bool S0 = false;   // (Profile 0) default is false
                          //  ** Recommended to leave this option "false" if using in tandem with other Serial devices. **
                          // If set to "true", "S0_<user definted>.rt4" will load when all inputs are in-active on SW1 (and SW2 if connected). 
                          // ** Does not work with MT-VIKI / TESmart HDMI switches **
@@ -52,9 +52,6 @@ bool S0 = false;         // (Profile 0)
 // For Extron Matrix switches that support DSVP. RGBS and HDMI/DVI video types.
 #define automatrixSW1 false // set true for auto matrix switching on "SW1" port
 #define automatrixSW2 false // set true for auto matrix switching on "SW2" port
-
-int const amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
-int const amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
 
 uint8_t ExtronVideoOutputPortSW1 = 1; // For older (E-series,non Plus/Ultra) Extron Matrix models, must specify the video output port that connects to RT4K
 uint8_t ExtronVideoOutputPortSW2 = 1; 
@@ -137,6 +134,15 @@ uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode i
                            
 ////////////////////////////////////////////////////////////////////////
 
+// automatrix variables
+#if automatrixSW1 || automatrixSW2
+uint8_t AMstate[32];
+uint32_t prevAMstate = 0;
+int  AMstateTop = -1;
+uint8_t amSizeSW1 = 8; // 8 by default, but updates if a different size is discovered
+uint8_t amSizeSW2 = 8; // ...
+
+#endif
 
 // SW1 software serial port -> MAX3232 TTL IC
 SoftwareSerial extronSerial = SoftwareSerial(3,4); // setup a software serial port for listening to SW1. rxPin = 3 / txPin = 4
@@ -146,12 +152,12 @@ AltSoftSerial extronSerial2; // setup yet another serial port for listening to S
 
 // Extron Global variables
 uint8_t eoutput[2]; // used to store Extron output
-char const sstack[] = "00000000000000000000000000000000"; // static stack of 32 "0" used for comparisons
-char stack1[] = "00000000000000000000000000000000"; 
-char stack2[] = "00000000000000000000000000000000"; 
 int currentInputSW1 = -1;
 int currentInputSW2 = -1;
 int currentProf = 0;
+String ecap = "00000000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
+String einput = "000000000000000000000000000000000000"; // used to store Extron input
+byte ecapbytes[44] = {0}; // used to store first 44 bytes / messages for Extron capture
 byte const VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
 
 // MT-VIKI serial command
@@ -211,26 +217,20 @@ void setup(){
 void loop(){
 
   readExtron1(); // also reads TESmart, MT-VIKI HDMI switches
-
   readExtron2(); // also reads TESmart, MT-VIKI HDMI switches
-
 }
 
 void readExtron1(){
 
-    byte ecapbytes[44]; // used to store first 44 captured bytes / messages for Extron               
-    String ecap = "0000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
-    String einput = "0000000000000000000000000000000000000000"; // used to store Extron input
-
-    if(automatrixSW1){ // if automatrixSW1 is set "true" in options, then "0LS" is sent every 500ms to see if an input has changed
+  #if automatrixSW1 // if automatrixSW1 is set "true" in options, then "0LS" is sent every 500ms to see if an input has changed
       LS0time1(500);
-    }
+  #endif
 
-#if !automatrixSW1  
+  #if !automatrixSW1
     if(MTVddSW1){            // if a MT-VIKI switch has been detected on SW1, then the currently active MT-VIKI hdmi port is checked for disconnection
       MTVtime1(1500);
     }
-#endif
+  #endif
 
     // listens to the Extron sw1 Port for changes
     // SIS Command Responses reference - Page 77 https://media.extron.com/public/download/files/userman/XP300_Matrix_B.pdf
@@ -269,6 +269,10 @@ void readExtron1(){
       einput = ecap.substring(0,5);
       eoutput[0] = 1;
     }
+    else if(ecap.substring(0,8) == "RECONFIG"){      // This is received everytime a change is made on older Extron Crosspoints
+      ExtronOutputQuery(ExtronVideoOutputPortSW1,1); // Read current input for "ExtronVideoOutputPortSW1" that is connected to port 1 of the DD
+    }
+#if automatrixSW1
     else if(ecap.substring(amSizeSW1 + 6,amSizeSW1 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW1 + 6,amSizeSW1 + 11);
       eoutput[0] = 1;
@@ -277,39 +281,32 @@ void readExtron1(){
       einput = ecap.substring(amSizeSW1 + 7,amSizeSW1 + 12);
       eoutput[0] = 1;
     }
-    else if(ecap.substring(0,8) == "RECONFIG"){      // This is received everytime a change is made on older Extron Crosspoints
-      ExtronOutputQuery(ExtronVideoOutputPortSW1,1); // Read current input for "ExtronVideoOutputPortSW1" that is connected to port 1 of the DD
-    }
-    else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW1){ // start of automatrix
+    else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All"){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
+        amSizeSW1 = ecap.length() - 7;
         einput = ecap.substring(5,amSizeSW1 + 5);
-      }else 
+      }
+      else{
+        amSizeSW1 = ecap.length() - 6;
         einput = ecap.substring(4,amSizeSW1 + 4);
-      for(int i=0;i<amSizeSW1;i++){
-        if(einput[i] != stack1[i] || einput[currentInputSW1 - 1] == '0'){ // check to see if anything changed
-          stack1[i] = einput[i];
-          if(einput[i] != '0'){
-            currentInputSW1 = i+1;
-            if(vinMatrix[0] == 1){
-              recallPreset(vinMatrix[currentInputSW1],1);
-            }
-            else if(vinMatrix[0] == 0 || vinMatrix[0] == 2){
-              setTie(currentInputSW1,1);
-              sendProfile(currentInputSW1,EXTRON1,1);
-            }
-
-          }
+      }
+      uint8_t check = readAMstate(einput,amSizeSW1);
+      if(check != currentInputSW1){
+        currentInputSW1 = check;
+        if(currentInputSW1 == 0){
+          setTie(currentInputSW1,1);
+          sendProfile(0,EXTRON1,1);
         }
-      } //end of for loop
-      if(einput.substring(0,amSizeSW1) == String(sstack).substring(0,amSizeSW1) 
-        && String(stack1).substring(0,amSizeSW1) == String(sstack).substring(0,amSizeSW1) && currentInputSW1 != 0){ // check for all inputs being off
-
-        currentInputSW1 = 0;
-        setTie(1,currentInputSW1);
-        sendProfile(0,EXTRON1,1);
-
+        else if(vinMatrix[0] == 1){
+          recallPreset(vinMatrix[currentInputSW1],1);
+        }
+        else if(vinMatrix[0] == 0 || vinMatrix[0] == 2){
+          setTie(currentInputSW1,1);          
+          sendProfile(currentInputSW1,EXTRON1,1);
+        }
       }
     } // end of automatrix
+#endif
     else{                             // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
       eoutput[0] = 1;
@@ -334,17 +331,12 @@ void readExtron1(){
         sendProfile(einput.substring(3,5).toInt(),EXTRON1,1);
       }
       else if(einput != "IN0 " && einput != "In0 " && einput != "In00"){ // for inputs 1-99 (SVS only)
-        if(einput.substring(3,4) == " ")
-          sendProfile(einput.substring(2,3).toInt(),EXTRON1,1);
-        else 
-          sendProfile(einput.substring(2,4).toInt(),EXTRON1,1);
+        sendProfile(einput.substring(2,4).toInt(),EXTRON1,1);
       }
       else if(einput == "IN0" || einput == "In0 " || einput == "In00"){
         sendProfile(0,EXTRON1,1);
       }
-
     }
-
 
 #if !automatrixSW1
     // VIKI Manual Switch Detection (created by: https://github.com/Arthrimus)
@@ -470,21 +462,18 @@ void readExtron1(){
       sendProfile(currentMTVinput[0],EXTRON1,0);
     }
 #endif
-    // set ecapbytes to 0 for next read
-    memset(ecapbytes,0,sizeof(ecapbytes)); // ecapbytes is local variable, but superstitious clearing regardless :) 
 
+    memset(ecapbytes,0,sizeof(ecapbytes)); // reset capture to all 0s
+    ecap = "00000000000000000000000000000000000000000000";
+    einput = "000000000000000000000000000000000000";
 
 } // end of readExtron1()
 
 void readExtron2(){
     
-    byte ecapbytes[44]; // used to store first 44 captured bytes / messages for Extron                
-    String ecap = "0000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
-    String einput = "0000000000000000000000000000000000000000"; // used to store Extron input
-
-    if(automatrixSW2){ // if automatrixSW2 is set "true" in options, then "0LS" is sent every 500ms to see if an input has changed
+#if automatrixSW2 // if automatrixSW2 is set "true" in options, then "0LS" is sent every 500ms to see if an input has changed
       LS0time2(500);
-    }
+#endif
 
 #if !automatrixSW2
     if(MTVddSW2){            // if a MT-VIKI switch has been detected on SW2, then the currently active MT-VIKI hdmi port is checked for disconnection
@@ -529,6 +518,10 @@ void readExtron2(){
       einput = ecap.substring(0,5);
       eoutput[1] = 1;
     }
+    else if(ecap.substring(0,8) == "RECONFIG"){     // This is received everytime a change is made on older Extron Crosspoints
+      ExtronOutputQuery(ExtronVideoOutputPortSW2,2); // Read current input for "ExtronVideoOutputPortSW2" that is connected to port 2 of the DD
+    }
+#if automatrixSW2    
     else if(ecap.substring(amSizeSW2 + 6,amSizeSW2 + 9) == "Rpr"){ // detect if a Preset has been used 
       einput = ecap.substring(amSizeSW2 + 6,amSizeSW2 + 11);
       eoutput[1] = 1;
@@ -537,38 +530,32 @@ void readExtron2(){
       einput = ecap.substring(amSizeSW2 + 7,amSizeSW2 + 12);
       eoutput[1] = 1;
     }
-    else if(ecap.substring(0,8) == "RECONFIG"){     // This is received everytime a change is made on older Extron Crosspoints
-      ExtronOutputQuery(ExtronVideoOutputPortSW2,2); // Read current input for "ExtronVideoOutputPortSW2" that is connected to port 2 of the DD
-    }
-    else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All" && automatrixSW2){ // start of automatrix
+    else if(ecap.substring(0,3) == "In0" && ecap.substring(4,7) != "All" && ecap.substring(5,8) != "All"){ // start of automatrix
       if(ecap.substring(0,4) == "In00"){
+        amSizeSW2 = ecap.length() - 7;
         einput = ecap.substring(5,amSizeSW2 + 5);
-      }else 
+      }
+      else{
+        amSizeSW2 = ecap.length() - 6;
         einput = ecap.substring(4,amSizeSW2 + 4);
-      for(int i=0;i<amSizeSW2;i++){
-        if(einput[i] != stack2[i] || einput[currentInputSW2 - 1] == '0'){ // check to see if anything changed
-          stack2[i] = einput[i];
-          if(einput[i] != '0'){
-            currentInputSW2 = i+1;
-            if(vinMatrix[0] == 1){
-              recallPreset(vinMatrix[currentInputSW2 + 32],2);
-            }
-            else if(vinMatrix[0] == 0 || vinMatrix[0] == 2){
-              setTie(currentInputSW2,2);
-              sendSVS(currentInputSW2 + 100);
-            }
-          }
+      }
+      uint8_t check2 = readAMstate(einput,amSizeSW2);
+      if(check2 != currentInputSW2){
+        currentInputSW2 = check2;
+        if(currentInputSW2 == 0){
+          setTie(currentInputSW2,2);
+          sendProfile(0,EXTRON2,1);
         }
-      } //end of for loop
-      if(einput.substring(0,amSizeSW2) == String(sstack).substring(0,amSizeSW2) 
-        && String(stack2).substring(0,amSizeSW2) == String(sstack).substring(0,amSizeSW2) && currentInputSW2 != 0){ // check for all inputs being off
-        
-        currentInputSW2 = 0;
-        setTie(currentInputSW2,2);
-        sendProfile(0,EXTRON2,1);
-
+        else if(vinMatrix[0] == 1){
+          recallPreset(vinMatrix[currentInputSW2 + 32],2);
+        }
+        else if(vinMatrix[0] == 0 || vinMatrix[0] == 2){
+          setTie(currentInputSW2,2);          
+          sendProfile(currentInputSW2 + 100,EXTRON2,1);
+        }
       }
     } // end of automatrix
+#endif
     else{                              // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
       eoutput[1] = 1;
@@ -728,16 +715,17 @@ void readExtron2(){
     // if a MT-VIKI active port disconnection is detected, and then later a reconnection, resend the profile.
     if(ecap.substring(24,41) == "IS_NON_INPUT_PORT"){
       MTVdiscon[1] = true;
-      sendProfile(0,EXTRON2,1);
+      sendProfile(0,EXTRON2,0);
     }
     else if(ecap.substring(24,41) != "IS_NON_INPUT_PORT" && ecap.substring(0,11) == "Uart_RxData" && MTVdiscon[1]){
       MTVdiscon[1] = false;
-      sendProfile(currentMTVinput[1],EXTRON2,1);
+      sendProfile(currentMTVinput[1],EXTRON2,0);
     }
 #endif
-    // set ecapbytes to 0 for next read
-    memset(ecapbytes,0,sizeof(ecapbytes)); // ecapbytes is local variable, but superstitious clearing regardless :) 
 
+    memset(ecapbytes,0,sizeof(ecapbytes)); // reset capture to 0s
+    ecap = "00000000000000000000000000000000000000000000";
+    einput = "000000000000000000000000000000000000";
 
 }// end of readExtron2()
 
@@ -894,11 +882,11 @@ void sendProfile(int sprof, uint8_t sname, uint8_t soverride){
       if(i != sname && mswitch[i].King == 1)
         mswitch[i].King = 0;
     }
-    sendSVS(mswitch[sname].Prof);
+    sendSVS(sprof);
   }
   else if(sprof == 0){ // all inputs are off, set attributes to 0, find a console that is On starting at the top of the list, set as King, send profile
     mswitch[sname].On = 0;
-    mswitch[sname].Prof = 33333;
+    mswitch[sname].Prof = 0;
     if(mswitch[sname].King == 1){
       for(uint8_t k=0;k < mswitchSize;k++){
         if(sname == k){
@@ -922,3 +910,49 @@ void sendProfile(int sprof, uint8_t sname, uint8_t soverride){
     }  
   } // end of else if prof == 0
 } // end of sendProfile()
+
+#if automatrixSW1 || automatrixSW2
+uint8_t readAMstate(String& sinput, uint8_t size){
+
+  uint32_t newAMstate = 0;
+  for(uint8_t i=0;i < size;i++){
+    char c = sinput.charAt(i);
+    if(c >= '1' && c <= '9'){
+      newAMstate |= (1UL << (size - 1 - i));
+    }
+  }
+
+  uint32_t changed = newAMstate ^ prevAMstate;
+
+  for(uint8_t bitPos = 0;bitPos < size;bitPos++){
+    uint32_t bit = 1UL << (size - 1 - bitPos);
+    uint8_t input = bitPos + 1;
+    if(changed & bit){
+      if(newAMstate & bit){ // input on
+        bool exists = false;
+        for(int j=0;j <= AMstateTop;j++){
+          if(AMstate[j] == input){
+            exists = true;
+            break;
+          }
+        }
+        if(!exists && AMstateTop < (size - 1)) AMstate[++AMstateTop] = input;
+      } // end of input on
+      else{ // input off
+        for(int j=0;j <= AMstateTop;j++){
+          if(AMstate[j] == input){
+            for(int k = j;k < AMstateTop;k++){
+              AMstate[k] = AMstate[k + 1];
+            }
+            AMstateTop--;
+            break;
+          }
+        }
+      } // end of input off
+    } // end of changed ?
+  } // end of for
+
+  prevAMstate = newAMstate;
+  return AMstate[AMstateTop];
+} // end of readAMstate()
+#endif
