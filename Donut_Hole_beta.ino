@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6b
+* Donut Hole beta v0.6c
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -39,8 +39,8 @@ uint8_t mswitchSize = 2;
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~241
-uint8_t const debugE2CAP = 0; // line ~490
+uint8_t const debugE1CAP = 0; // line ~239
+uint8_t const debugE2CAP = 0; // line ~479
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -314,16 +314,7 @@ void readExtron1(){
 
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW1)
     // Without this, the profile would be resent when changes to other outputs are selected.
-    if(einput.substring(0,2) == "IN"){
-      if(einput.substring(3,4) == " "){
-        if(einput.substring(2,3).toInt() == currentProf)
-          einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
-      }
-      else{
-        if(einput.substring(2,4).toInt() == currentProf)
-          einput = "XX00";
-      }
-    }
+    if(einput.substring(0,2) == "IN" && einput.substring(2,4).toInt() == currentProf) einput = "XX00";
 
     // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references eoutput[0]
     if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && eoutput[0] && !automatrixSW1) || (einput.substring(0,3) == "Rpr")){
@@ -563,16 +554,7 @@ void readExtron2(){
 
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW2)
     // Without this, the profile would be resent when changes to other outputs are selected.
-    if(einput.substring(0,2) == "IN"){
-      if(einput.substring(3,4) == " "){
-        if(einput.substring(2,3).toInt()+100 == currentProf)
-          einput = "XX00"; // if the input is still the same, set einput so that nothing triggers a profile send
-      }
-      else{
-        if(einput.substring(2,4).toInt()+100 == currentProf)
-          einput = "XX00";
-      }
-    }
+    if(einput.substring(0,2) == "IN" && einput.substring(2,4).toInt()+100 == currentProf) einput = "XX00";
 
     // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references eoutput[1]
     if(((einput.substring(0,2) == "In" || einput.substring(0,2) == "IN") && eoutput[1] && !automatrixSW2) || (einput.substring(0,3) == "Rpr")){
@@ -580,10 +562,7 @@ void readExtron2(){
         sendProfile(einput.substring(3,5).toInt()+100,EXTRON2,1);
       }
       else if(einput != "IN0" && einput != "In0 " && einput != "In00"){
-        if(einput.substring(3,4) == " ") 
-          sendProfile(einput.substring(2,3).toInt()+100,EXTRON2,1);
-        else 
-          sendProfile(einput.substring(2,4).toInt()+100,EXTRON2,1);
+        sendProfile(einput.substring(2,4).toInt()+100,EXTRON2,1);
       }
       else if(einput == "IN0" || einput == "In0 " || einput == "In00"){
         sendProfile(0,EXTRON2,1);
@@ -653,49 +632,41 @@ void readExtron2(){
     if(ecapbytes[4] == 17 || ecapbytes[3] == 17 || ecap.substring(0,5) == "Auto_" || ecap.substring(15,20) == "Auto_" || ITEinputnum[1] > 0){
       if(ecapbytes[6] == 22 || ecapbytes[5] == 22 || ecapbytes[11] == 48 || ecapbytes[26] == 48 || ITEinputnum[1] == 1){
         sendProfile(101,EXTRON2,1);
-
         currentMTVinput[1] = 101;
         MTVdiscon[1] = false;
       }
       else if(ecapbytes[6] == 23 || ecapbytes[5] == 23 || ecapbytes[11] == 49 || ecapbytes[26] == 49 || ITEinputnum[1] == 2){
         sendProfile(102,EXTRON2,1);
-
         currentMTVinput[1] = 102;
         MTVdiscon[1] = false;
       }
       else if(ecapbytes[6] == 24 || ecapbytes[5] == 24 || ecapbytes[11] == 50 || ecapbytes[26] == 50 || ITEinputnum[1] == 3){
         sendProfile(103,EXTRON2,1);
-
         currentMTVinput[1] = 103;
         MTVdiscon[1] = false;
       }
       else if(ecapbytes[6] == 25 || ecapbytes[5] == 25 || ecapbytes[11] == 51 || ecapbytes[26] == 51 || ITEinputnum[1] == 4){
         sendProfile(104,EXTRON2,1);
-
         currentMTVinput[1] = 104;
         MTVdiscon[1] = false;
       }
       else if(ecapbytes[6] == 26 || ecapbytes[5] == 26 || ecapbytes[11] == 52 || ecapbytes[26] == 52 || ITEinputnum[1] == 5){
         sendProfile(105,EXTRON2,1);
-
         currentMTVinput[1] = 105;
         MTVdiscon[1] = false;
       }
       else if(ecapbytes[6] == 27 || ecapbytes[5] == 27 || ecapbytes[11] == 53 || ecapbytes[26] == 53 || ITEinputnum[1] == 6){
         sendProfile(106,EXTRON2,1);
-
         currentMTVinput[1] = 106;
         MTVdiscon[1] = false;
       }
       else if(ecapbytes[6] == 28 || ecapbytes[5] == 28 || ecapbytes[11] == 54 || ecapbytes[26] == 54 || ITEinputnum[1] == 7){
         sendProfile(107,EXTRON2,1);
-
         currentMTVinput[1] = 107;
         MTVdiscon[1] = false;
       }
       else if(ecapbytes[6] == 29 || ecapbytes[5] == 29 || ecapbytes[11] == 55 || ecapbytes[26] == 55 || ITEinputnum[1] == 8){
         sendProfile(108,EXTRON2,1);
-
         currentMTVinput[1] = 108;
         MTVdiscon[1] = false;
       }
