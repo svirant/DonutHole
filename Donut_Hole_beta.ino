@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6c
+* Donut Hole beta v0.6d
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -445,12 +445,12 @@ void readExtron1(){
     
     // if a MT-VIKI active port disconnection is detected, and then later a reconnection, resend the profile.
     if(ecap.substring(24,41) == "IS_NON_INPUT_PORT"){
+      if(!MTVdiscon[0]) sendProfile(0,EXTRON1,0);
       MTVdiscon[0] = true;
-      sendProfile(0,EXTRON1,0);
     }
     else if(ecap.substring(24,41) != "IS_NON_INPUT_PORT" && ecap.substring(0,11) == "Uart_RxData" && MTVdiscon[0]){
       MTVdiscon[0] = false;
-      sendProfile(currentMTVinput[0],EXTRON1,0);
+      sendProfile(currentMTVinput[0],EXTRON1,1);
     }
 #endif
 
@@ -685,12 +685,12 @@ void readExtron2(){
 
     // if a MT-VIKI active port disconnection is detected, and then later a reconnection, resend the profile.
     if(ecap.substring(24,41) == "IS_NON_INPUT_PORT"){
+      if(!MTVdiscon[1]) sendProfile(0,EXTRON2,0);
       MTVdiscon[1] = true;
-      sendProfile(0,EXTRON2,0);
     }
     else if(ecap.substring(24,41) != "IS_NON_INPUT_PORT" && ecap.substring(0,11) == "Uart_RxData" && MTVdiscon[1]){
       MTVdiscon[1] = false;
-      sendProfile(currentMTVinput[1],EXTRON2,0);
+      sendProfile(currentMTVinput[1],EXTRON2,1);
     }
 #endif
 
