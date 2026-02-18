@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6d
+* Donut Hole beta v0.6e
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -40,7 +40,7 @@ uint8_t mswitchSize = 2;
 */
 
 uint8_t const debugE1CAP = 0; // line ~239
-uint8_t const debugE2CAP = 0; // line ~479
+uint8_t const debugE2CAP = 0; // line ~484
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -305,7 +305,12 @@ void readExtron1(){
           sendProfile(currentInputSW1,EXTRON1,1);
         }
       }
-    } // end of automatrix
+    }
+    else if(ecap.substring(0,10) == "00000000\r\n" || ecap.substring(0,18) == "0000000000000000\r\n" 
+            || ecap.substring(0,26) == "000000000000000000000000\r\n" 
+            || ecap.substring(0,34) == "00000000000000000000000000000000\r\n"){
+      extronSerial.write(VERB,5); // sets extron matrix switch to Verbose level 3
+    } // end of Verbose check
 #endif
     else{                             // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
@@ -545,7 +550,12 @@ void readExtron2(){
           sendProfile(currentInputSW2 + 100,EXTRON2,1);
         }
       }
-    } // end of automatrix
+    }
+    else if(ecap.substring(0,10) == "00000000\r\n" || ecap.substring(0,18) == "0000000000000000\r\n" 
+            || ecap.substring(0,26) == "000000000000000000000000\r\n" 
+            || ecap.substring(0,34) == "00000000000000000000000000000000\r\n"){
+      extronSerial2.write(VERB,5); // sets extron matrix switch to Verbose level 3
+    } // end of Verbose check
 #endif
     else{                              // less complex switches only report input status, no output status
       einput = ecap.substring(0,4);
