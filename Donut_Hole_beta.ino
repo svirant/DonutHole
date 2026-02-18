@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6e
+* Donut Hole beta v0.6f
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -39,8 +39,8 @@ uint8_t mswitchSize = 2;
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~239
-uint8_t const debugE2CAP = 0; // line ~484
+uint8_t const debugE1CAP = 0; // line ~237
+uint8_t const debugE2CAP = 0; // line ~483
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -204,10 +204,8 @@ void setup(){
   while(!Serial){;}   // allow connection to establish before continuing
   extronSerial.begin(9600); // set the baud rate for the Extron sw1 Connection
   extronSerial.setTimeout(150); // sets the timeout for reading / saving into a string
-  if(automatrixSW1)extronSerial.write(VERB,5); // sets extron matrix switch to Verbose level 3
   extronSerial2.begin(9600); // set the baud rate for Extron sw2 Connection
   extronSerial2.setTimeout(150); // sets the timeout for reading / saving into a string for the Extron sw2 Connection
-  if(automatrixSW2)extronSerial2.write(VERB,5); // sets extron matrix switch to Verbose level 3
   pinMode(12,INPUT_PULLUP);
   delay(100);
   if(digitalRead(12) == HIGH) S0 = true; // check state of JP1 jumper. closed jumper disables S0, cut trace / open jumper enables S0.
@@ -306,7 +304,8 @@ void readExtron1(){
         }
       }
     }
-    else if(ecap.substring(0,10) == "00000000\r\n" || ecap.substring(0,18) == "0000000000000000\r\n" 
+    else if(ecap.substring(0,10) == "00000000\r\n" || ecap.substring(0,14) == "000000000000\r\n"
+            || ecap.substring(0,18) == "0000000000000000\r\n" 
             || ecap.substring(0,26) == "000000000000000000000000\r\n" 
             || ecap.substring(0,34) == "00000000000000000000000000000000\r\n"){
       extronSerial.write(VERB,5); // sets extron matrix switch to Verbose level 3
@@ -551,7 +550,8 @@ void readExtron2(){
         }
       }
     }
-    else if(ecap.substring(0,10) == "00000000\r\n" || ecap.substring(0,18) == "0000000000000000\r\n" 
+    else if(ecap.substring(0,10) == "00000000\r\n" || ecap.substring(0,14) == "000000000000\r\n"
+            || ecap.substring(0,18) == "0000000000000000\r\n" 
             || ecap.substring(0,26) == "000000000000000000000000\r\n" 
             || ecap.substring(0,34) == "00000000000000000000000000000000\r\n"){
       extronSerial2.write(VERB,5); // sets extron matrix switch to Verbose level 3
