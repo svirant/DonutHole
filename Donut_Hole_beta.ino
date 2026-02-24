@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6g
+* Donut Hole beta v0.6h
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,8 @@
 
 #define EXTRON1 0
 #define EXTRON2 1
+#define MAX_BYTES 44
+#define MAX_EINPUT 36
 
 struct profileorder {
   int Prof;
@@ -39,8 +41,8 @@ uint8_t mswitchSize = 2;
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~236
-uint8_t const debugE2CAP = 0; // line ~482
+uint8_t const debugE1CAP = 0; // line ~240
+uint8_t const debugE2CAP = 0; // line ~486
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -156,7 +158,7 @@ int currentInputSW2 = -1;
 int currentProf = 0;
 String ecap = "00000000000000000000000000000000000000000000"; // used to store Extron status messages for Extron in String format
 String einput = "000000000000000000000000000000000000"; // used to store Extron input
-byte ecapbytes[44] = {0}; // used to store first 44 bytes / messages for Extron capture
+byte ecapbytes[MAX_BYTES] = {0}; // used to store first MAX_BYTES bytes / messages for Extron capture
 byte const VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
 
 // MT-VIKI serial command
@@ -205,6 +207,8 @@ void setup(){
   extronSerial.setTimeout(150); // sets the timeout for reading / saving into a string
   extronSerial2.begin(9600); // set the baud rate for Extron sw2 Connection
   extronSerial2.setTimeout(150); // sets the timeout for reading / saving into a string for the Extron sw2 Connection
+  ecap.reserve(MAX_BYTES); // reserve MAX_BYTES bytes in memory to prevent fragmentation
+  einput.reserve(MAX_EINPUT); // reserve MAX_EINPUT ^^^
   pinMode(12,INPUT_PULLUP);
   delay(100);
   if(digitalRead(12) == HIGH) S0 = true; // check state of JP1 jumper. closed jumper disables S0, cut trace / open jumper enables S0.
@@ -232,10 +236,10 @@ void readExtron1(){
     // listens to the Extron sw1 Port for changes
     // SIS Command Responses reference - Page 77 https://media.extron.com/public/download/files/userman/XP300_Matrix_B.pdf
     if(extronSerial.available() > 0){ // if there is data available for reading, read
-      extronSerial.readBytes(ecapbytes,44); // read in and store only the first 44 bytes for every status message received from 1st Extron SW port
+      extronSerial.readBytes(ecapbytes,MAX_BYTES); // read in and store only the first MAX_BYTES bytes for every status message received from 1st Extron SW port
       if(debugE1CAP){
         Serial.print(F("ecap HEX: "));
-        for(int i=0;i<44;i++){
+        for(int i=0;i<MAX_BYTES;i++){
           Serial.print(ecapbytes[i],HEX);Serial.print(F(" "));
         }
         Serial.println(F("\r"));
@@ -457,7 +461,7 @@ void readExtron1(){
     }
 #endif
 
-    memset(ecapbytes,0,44); // reset capture to all 0s
+    memset(ecapbytes,0,MAX_BYTES); // reset capture to all 0s
     ecap = "00000000000000000000000000000000000000000000";
     einput = "000000000000000000000000000000000000";
 
@@ -478,10 +482,10 @@ void readExtron2(){
 
     // listens to the Extron sw2 Port for changes
     if(extronSerial2.available() > 0){ // if there is data available for reading, read
-      extronSerial2.readBytes(ecapbytes,44); // read in and store only the first 44 bytes for every status message received from 2nd Extron port
+      extronSerial2.readBytes(ecapbytes,MAX_BYTES); // read in and store only the first MAX_BYTES bytes for every status message received from 2nd Extron port
       if(debugE2CAP){
         Serial.print(F("ecap2 HEX: "));
-        for(int i=0;i<44;i++){
+        for(int i=0;i<MAX_BYTES;i++){
           Serial.print(ecapbytes[i],HEX);Serial.print(F(" "));
         }
         Serial.println(F("\r"));
@@ -703,7 +707,7 @@ void readExtron2(){
     }
 #endif
 
-    memset(ecapbytes,0,44); // reset capture to all 0s
+    memset(ecapbytes,0,MAX_BYTES); // reset capture to all 0s
     ecap = "00000000000000000000000000000000000000000000";
     einput = "000000000000000000000000000000000000";
 
