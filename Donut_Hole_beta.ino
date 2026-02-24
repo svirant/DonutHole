@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6f
+* Donut Hole beta v0.6g
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -39,8 +39,8 @@ uint8_t mswitchSize = 2;
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~237
-uint8_t const debugE2CAP = 0; // line ~483
+uint8_t const debugE1CAP = 0; // line ~236
+uint8_t const debugE2CAP = 0; // line ~482
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -141,7 +141,6 @@ uint32_t prevAMstate = 0;
 int  AMstateTop = -1;
 uint8_t amSizeSW1 = 8; // 8 by default, but updates if a different size is discovered
 uint8_t amSizeSW2 = 8; // ...
-
 #endif
 
 // SW1 software serial port -> MAX3232 TTL IC
@@ -226,7 +225,7 @@ void readExtron1(){
 
   #if !automatrixSW1
     if(MTVddSW1){            // if a MT-VIKI switch has been detected on SW1, then the currently active MT-VIKI hdmi port is checked for disconnection
-      MTVtime1(1500);
+      MTVtime1(2000);
     }
   #endif
 
@@ -458,7 +457,7 @@ void readExtron1(){
     }
 #endif
 
-    memset(ecapbytes,0,sizeof(ecapbytes)); // reset capture to all 0s
+    memset(ecapbytes,0,44); // reset capture to all 0s
     ecap = "00000000000000000000000000000000000000000000";
     einput = "000000000000000000000000000000000000";
 
@@ -472,7 +471,7 @@ void readExtron2(){
 
 #if !automatrixSW2
     if(MTVddSW2){            // if a MT-VIKI switch has been detected on SW2, then the currently active MT-VIKI hdmi port is checked for disconnection
-      MTVtime2(1500);
+      MTVtime2(2000);
     }
 #endif
 
@@ -704,7 +703,7 @@ void readExtron2(){
     }
 #endif
 
-    memset(ecapbytes,0,sizeof(ecapbytes)); // reset capture to 0s
+    memset(ecapbytes,0,44); // reset capture to all 0s
     ecap = "00000000000000000000000000000000000000000000";
     einput = "000000000000000000000000000000000000";
 
@@ -731,7 +730,6 @@ void LS0time1(unsigned long eTime){
     LScurrentTime = 0;
     LSprevTime = 0;
     extronSerial.print("0LS");
-    delay(20);
  }
 }  // end of LS0time1()
 
@@ -743,7 +741,6 @@ void LS0time2(unsigned long eTime){
     LScurrentTime2 = 0;
     LSprevTime2 = 0;
     extronSerial2.print("0LS");
-    delay(20);
  }
 }  // end of LS0time2()
 
@@ -785,8 +782,6 @@ void recallPreset(uint8_t num, uint8_t sw){
     extronSerial2.print(num);
     extronSerial2.print(F("."));
   }
-
-  delay(20);
 } // end of recallPreset()
 
 #if !automatrixSW1
@@ -798,7 +793,6 @@ void MTVtime1(unsigned long eTime){
     MTVcurrentTime = 0;
     MTVprevTime = 0;
     extronSerialEwrite("viki",currentMTVinput[0],1);
-    delay(50);
  }
 }  // end of MTVtime1()
 #endif
@@ -812,7 +806,6 @@ void MTVtime2(unsigned long eTime){
     MTVcurrentTime2 = 0;
     MTVprevTime2 = 0;
     extronSerialEwrite("viki",currentMTVinput[1] - 100,2);
-    delay(50);
  }
 }  // end of MTVtime2()
 #endif
@@ -831,8 +824,6 @@ void ExtronOutputQuery(uint8_t outputNum, uint8_t sw){
     extronSerial.write((uint8_t *)cmd,len);
   else if(sw == 2)
     extronSerial2.write((uint8_t *)cmd,len);
-
-  delay(50);
 } // end of ExtronOutputQuery()
 
 void extronSerialEwrite(String type, uint8_t value, uint8_t sw){
@@ -843,7 +834,6 @@ void extronSerialEwrite(String type, uint8_t value, uint8_t sw){
     else if(sw == 2)
       extronSerial2.write(viki, 4);
   }
-  delay(50);
 }  // end of extronSerialEwrite()
 
 void sendProfile(int sprof, uint8_t sname, uint8_t soverride){
