@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6i
+* Donut Hole beta v0.6j
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -316,11 +316,11 @@ void readExtron1(){
     }
     else if(substringEquals(ecap,0,3,"In0") && !substringEquals(ecap,4,7,"All") && !substringEquals(ecap,5,8,"All")){ // start of automatrix
       if(substringEquals(ecap,0,4,"In00")){
-        amSizeSW1 = lengthUpToLineEnding(ecap,MAX_BYTES) - 7;
+        amSizeSW1 = lengthUpToLineEnding(ecap,MAX_BYTES) - 5;
         copySnippet(ecap,5,amSizeSW1 + 5,einput);
       }
       else{
-        amSizeSW1 = lengthUpToLineEnding(ecap,MAX_BYTES) - 6;
+        amSizeSW1 = lengthUpToLineEnding(ecap,MAX_BYTES) - 4;
         copySnippet(ecap,4,amSizeSW1 + 4,einput);
       }
       uint8_t check = readAMstate(einput,amSizeSW1);
@@ -562,11 +562,11 @@ void readExtron2(){
     }
     else if(substringEquals(ecap,0,3,"In0") && !substringEquals(ecap,4,7,"All") && !substringEquals(ecap,5,8,"All")){ // start of automatrix
       if(substringEquals(ecap,0,4,"In00")){
-        amSizeSW2 = lengthUpToLineEnding(ecap,MAX_BYTES) - 7;
+        amSizeSW2 = lengthUpToLineEnding(ecap,MAX_BYTES) - 5;
         copySnippet(ecap,5,amSizeSW2 + 5,einput);
       }
       else{
-        amSizeSW2 = lengthUpToLineEnding(ecap,MAX_BYTES) - 6;
+        amSizeSW2 = lengthUpToLineEnding(ecap,MAX_BYTES) - 4;
         copySnippet(ecap,4,amSizeSW2 + 4,einput);
       }
       uint8_t check2 = readAMstate(einput,amSizeSW2);
