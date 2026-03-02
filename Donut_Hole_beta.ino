@@ -1,5 +1,5 @@
 /*
-* Donut Hole beta v0.6j
+* Donut Hole beta v0.6k
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,10 @@
 
 #define EXTRON1 0
 #define EXTRON2 1
-#define MAX_BYTES 44
+#define MAX_BYTES 50
 #define MAX_EINPUT 36
+#define MTV_TIME_CHECK 1500 // time between mt-viki disconnetion detection checks
+#define AM_TIME_CHECK 500 // time between auto-matrix input change detection
 
 struct profileorder {
   int Prof;
@@ -41,8 +43,8 @@ uint8_t mswitchSize = 2;
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~272
-uint8_t const debugE2CAP = 0; // line ~518
+uint8_t const debugE1CAP = 0; // line ~274
+uint8_t const debugE2CAP = 0; // line ~526
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -256,12 +258,12 @@ uint8_t lengthUpToLineEnding(const char* buffer, uint8_t bufLen){
 void readExtron1(){
 
   #if automatrixSW1 // if automatrixSW1 is set "true" in options, then "0LS" is sent every 500ms to see if an input has changed
-      LS0time1(500);
+      LS0time1(AM_TIME_CHECK);
   #endif
 
   #if !automatrixSW1
     if(MTVddSW1){            // if a MT-VIKI switch has been detected on SW1, then the currently active MT-VIKI hdmi port is checked for disconnection
-      MTVtime1(2000);
+      MTVtime1(MTV_TIME_CHECK);
     }
   #endif
 
@@ -380,11 +382,17 @@ void readExtron1(){
 
 
     if((substringEquals(ecap,0,3,"==>") || substringEquals(ecap,15,18,"==>")) && listenITE[0]){   // checks if the serial command from the VIKI starts with "==>" This indicates that the command is an ITE mux status message
-      if(substringEquals(ecap,10,11,"P")){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+      if(substringEquals(ecap,0,11,"==>IT6635_P")){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus[0] = sliceToInt(ecap,11,12);
       }
-      if(substringEquals(ecap,25,26,"P")){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+      if(substringEquals(ecap,15,26,"==>IT6635_P")){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus[0] = sliceToInt(ecap,26,27);
+      }
+      if(substringEquals(ecap,21,32,"==>IT6635_P")){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+        ITEstatus[0] = sliceToInt(ecap,32,33);
+      }
+      if(substringEquals(ecap,36,47,"==>IT6635_P")){        // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+        ITEstatus[0] = sliceToInt(ecap,47,48);
       }
       if(substringEquals(ecap,18,20,">0")){       // checks the value of the IT66535 IC that points to Dev->0. P2 is input 1 / P1 is input 2 / P0 is input 3
         ITEstatus[1] = sliceToInt(ecap,12,13);
@@ -502,12 +510,12 @@ void readExtron1(){
 void readExtron2(){
     
 #if automatrixSW2 // if automatrixSW2 is set "true" in options, then "0LS" is sent every 500ms to see if an input has changed
-      LS0time2(500);
+      LS0time2(AM_TIME_CHECK);
 #endif
 
 #if !automatrixSW2
     if(MTVddSW2){            // if a MT-VIKI switch has been detected on SW2, then the currently active MT-VIKI hdmi port is checked for disconnection
-      MTVtime2(2000);
+      MTVtime2(MTV_TIME_CHECK);
     }
 #endif
 
@@ -628,11 +636,17 @@ void readExtron2(){
 
 
     if((substringEquals(ecap,0,3,"==>") || substringEquals(ecap,15,18,"==>")) && listenITE[1]){   // checks if the serial command from the VIKI starts with "==>" This indicates that the command is an ITE mux status message
-      if(substringEquals(ecap,10,11,"P")){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+      if(substringEquals(ecap,0,11,"==>IT6635_P")){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus2[0] = sliceToInt(ecap,11,12);
       }
-      if(substringEquals(ecap,25,26,"P")){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+      if(substringEquals(ecap,15,26,"==>IT6635_P")){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
         ITEstatus2[0] = sliceToInt(ecap,26,27);
+      }
+      if(substringEquals(ecap,21,32,"==>IT6635_P")){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+        ITEstatus2[0] = sliceToInt(ecap,32,33);
+      }
+      if(substringEquals(ecap,36,47,"==>IT6635_P")){       // checks the last value of the IT6635 mux. P3 points to inputs 1,2,3 / P2 points to inputs 4,5,6 / P1 input 7 / P0 input 8
+        ITEstatus2[0] = sliceToInt(ecap,47,48);
       }
       if(substringEquals(ecap,18,20,">0")){       // checks the value of the IT66535 IC that points to Dev->0. P2 is input 1 / P1 is input 2 / P0 is input 3
         ITEstatus2[1] = sliceToInt(ecap,12,13);
