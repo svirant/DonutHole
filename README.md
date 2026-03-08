@@ -13,7 +13,7 @@
 </br>
 
 > [!NOTE]
-> *NEW* beta allows:
+> *NEW* version allows:
 > <br /> 
 >   - **MT-VIKI Disconnection Detection** - when an input is powered off and on, the profile is resent.
 >   - **front case buttons/remote NOW change profiles on the MT-VIKI HDMI switch.** Thanks to [Arthrimus](https://scalablevideoswitch.com/)! 
@@ -23,31 +23,19 @@
 > 
 > <br /> For Matrix auto-switching, use the follow Options to enable:
 > ```
-> bool automatrixSW1 = true; // set true for auto matrix switching on "SW1" port
-> bool automatrixSW2 = false; // set true for auto matrix switching on "SW2" port
-> 
-> int amSizeSW1 = 8; // number of input ports for auto matrix switching on SW1. Ex: 8,12,16,32
-> int amSizeSW2 = 8; // number of input ports for auto matrix switching on SW2. ...
+> #define automatrixSW1 true // set true for auto matrix switching on "SW1" port
+> #define automatrixSW2 false // set true for auto matrix switching on "SW2" port
 >
-> uint8_t ExtronVideoOutputPortSW1 = 1; // For non "Plus" Extron Matrix models, must specify video output port that connects to RT4K
-> uint8_t ExtronVideoOutputPortSW2 = 1;
+> uint8_t ExtronVideoOutputPortSW1 = 1; // For older (E-series,non Plus/Ultra) Extron Matrix models, must specify the video output port that connects to RT4K
+> uint8_t ExtronVideoOutputPortSW2 = 1; 
 >
-> uint8_t const vinMatrix[65] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
->                                                       // set to 1 for the auto switched input to trigger a Preset on SW1
->                                                       // set to 2 for the auto switched input to trigger a Preset on SW2
->                                                       // set to 3 for both SW1 & SW2
->                                                       // set to 0 to disable this feature (default - aka input goes to all outputs unless defined in voutMatrix)
->                                                       //
->                                                       // set the following inputs to the desired Preset #
->                                                       // (by default each input # is set to the same corresponding Preset #)
->                                                       
-> uint8_t const voutMatrix[66] = {1,  // MATRIX switchers // When auto matrix mode is enabled: (automatrixSW1 / SW2 above)
->                                                       // set to 1 for the auto switched input to go to ALL outputs (default)
->                                                       // set to 0 to select outputs to be enabled/disabled as listed below
->                                                       //
->                                                       // When auto matrix mode is disabled: 
->                                                       // ALL input changes to any/all outputs result in a profile change
->                                                       // disable specific outputs from triggering profile changes
+> uint8_t const vinMatrix[] = {0,  // MATRIX switchers  // When auto matrix mode is enabled: (automatrixSW1 / SW2 defined above)
+>                                                        // set to 0 for the auto switched input to tie to all outputs
+>                                                        // set to 1 for the auto switched input to trigger a Preset
+>                                                        // set to 2 for the auto switched input to tie to "ExtronVideoOutputPortSW1" / "ExtronVideoOutputPortSW2"
+>                                                        //
+>                                                        // For option 1, set the following inputs to the desired Preset #
+>                                                        // (by default each input # is set to the same corresponding Preset #)
 > ```
 <br />
 <br />
