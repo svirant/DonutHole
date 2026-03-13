@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.6k
+* Donut Hole v0.6l
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -43,8 +43,8 @@ uint8_t mswitchSize = 2;
 //////////////////
 */
 
-uint8_t const debugE1CAP = 0; // line ~274
-uint8_t const debugE2CAP = 0; // line ~526
+uint8_t const debugE1CAP = 0; // line ~276
+uint8_t const debugE2CAP = 0; // line ~532
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -162,6 +162,7 @@ char ecap[MAX_BYTES] = {};
 char einput[MAX_EINPUT] = {};
 byte ecapbytes[MAX_BYTES] = {0}; // used to store first MAX_BYTES bytes / messages for Extron capture
 byte const VERB[5] = {0x57,0x33,0x43,0x56,0x7C}; // sets matrix switch to verbose level 3
+bool ReconfigSet[2] = {false,false};
 
 // MT-VIKI serial command
 byte viki[4] = {0xA5,0x5A,0x00,0xCC};
@@ -240,7 +241,8 @@ void copySnippet(const char* src, int start, int end, char* dest){
 
 int sliceToInt(const char* buffer, int start, int end){
   int value = 0;
-  for(int i=start;i < end;i++){
+  for(int i = start; i < end; i++){
+    if(buffer[i] < '0' || buffer[i] > '9') break;
     value = value * 10 + (buffer[i] - '0');
   }
   return value;
@@ -305,6 +307,7 @@ void readExtron1(){
       eoutput[0] = 1;
     }
     else if(substringEquals(ecap,0,8,"RECONFIG")){      // This is received everytime a change is made on older Extron Crosspoints
+      ReconfigSet[0] = true;
       ExtronOutputQuery(ExtronVideoOutputPortSW1,1); // Read current input for "ExtronVideoOutputPortSW1" that is connected to port 1 of the DD
     }
 #if automatrixSW1
@@ -355,7 +358,10 @@ void readExtron1(){
 
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW1)
     // Without this, the profile would be resent when changes to other outputs are selected.
-    if(substringEquals(einput,0,2,"IN") &&  sliceToInt(einput,2,4) == currentProf) copySnippet("XX00",0,4,einput);
+    if(substringEquals(einput,0,2,"IN") && sliceToInt(einput,2,4) == currentProf && ReconfigSet[0]){
+      ReconfigSet[0] = false;
+      copySnippet("XX00",0,4,einput);
+    }
 
     // for Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references eoutput[0]
     if((substringEquals(einput,0,2,"IN") && eoutput[0] && !automatrixSW1) || substringEquals(einput,0,3,"Rpr")){
@@ -557,6 +563,7 @@ void readExtron2(){
       eoutput[1] = 1;
     }
     else if(substringEquals(ecap,0,8,"RECONFIG")){     // This is received everytime a change is made on older Extron Crosspoints
+      ReconfigSet[1] = true;
       ExtronOutputQuery(ExtronVideoOutputPortSW2,2); // Read current input for "ExtronVideoOutputPortSW2" that is connected to port 2 of the DD
     }
 #if automatrixSW2    
@@ -607,7 +614,10 @@ void readExtron2(){
 
     // For older Extron Crosspoints, where "RECONFIG" is sent when changes are made, the profile is only changed when a different input is selected for the defined output. (ExtronVideoOutputPortSW2)
     // Without this, the profile would be resent when changes to other outputs are selected.
-    if(substringEquals(einput,0,2,"IN") && sliceToInt(einput,2,4)+100 == currentProf) copySnippet("XX00",0,4,einput);
+    if(substringEquals(einput,0,2,"IN") && sliceToInt(einput,2,4)+100 == currentProf && ReconfigSet[1]){
+      ReconfigSet[1] = false;  
+      copySnippet("XX00",0,4,einput);
+    }
 
     // For Extron devices, use remaining results to see which input is now active and change profile accordingly, cross-references eoutput[1]
     if((substringEquals(einput,0,2,"IN") && eoutput[1] && !automatrixSW2) || substringEquals(einput,0,3,"Rpr")){
