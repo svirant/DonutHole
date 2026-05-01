@@ -16,6 +16,7 @@
 > *NEW* version allows:
 > <br /> 
 >   - **MT-VIKI Disconnection Detection** - when an input is powered off and on, the profile is resent.
+>     - **Disable MT-VIKI beeping by pressing the "#" button on its remote.**
 >   - **front case buttons/remote NOW change profiles on the MT-VIKI HDMI switch.** Thanks to [Arthrimus](https://scalablevideoswitch.com/)! 
 >   - **auto-switching on Extron Matrix switchers** that support DSVP. Works with RGBS/HV and HDMI/DVI signal types.
 >   - **Support for older Extron Crosspoint (non plus) matrix switchers**
@@ -50,7 +51,7 @@
 | ------------- | ------------- |------------- |
 | TESmart 16x1 HDMI  | yes, confirmed first hand  | [Amazon](https://a.co/d/9XwZDlt) link for reference|
 | TESmart 8x1 HDMI  | unconfirmed, but should work, let me know! | |
-| MT-VIKI 8 port HDMI | yes, confirmed first hand | [Amazon](https://a.co/d/eHo5uKs) link for reference|
+| MT-VIKI 8 port HDMI | yes, confirmed first hand | [Amazon](https://a.co/d/eHo5uKs) link for reference. **Disable MT-VIKI beeping by pressing the "#" button on it's remote.** |
 | Extron RGBHV sw6  | yes, confirmed first hand  | auto-profiles triggered by manual selection or auto-switching |
 | Extron SW4 VGA Ars | yes, confirmed by "Nobody" on the RT4K Discord | auto-profiles triggered by manual selection or auto-switching |
 | Extron DXP 88 | yes, confirmed first hand | Auto-switching can be enabled in "Options" section of .ino.  Works with Presets. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc|
