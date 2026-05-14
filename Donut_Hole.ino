@@ -1,5 +1,5 @@
 /*
-* Donut Hole v0.6l
+* Donut Hole v0.6m
 * Copyright (C) 2026 @Donutswdad
 *
 * This program is free software: you can redistribute it and/or modify
@@ -44,7 +44,7 @@ uint8_t mswitchSize = 2;
 */
 
 uint8_t const debugE1CAP = 0; // line ~276
-uint8_t const debugE2CAP = 0; // line ~532
+uint8_t const debugE2CAP = 0; // line ~535
 
 uint16_t const offset = 0; // Only needed if multiple Donut Holes, gSerial Enablers, Donut Dongles are connected. Set offset so 2nd, 3rd, etc don't overlap profiles. (e.g. offset = 100;) 
 
@@ -189,9 +189,9 @@ unsigned long sendtimer2 = 0;
 unsigned long ITEtimer2 = 0;
 #endif
 
-// VIKI Manual Switch variables
-uint8_t ITEstatus[] = {3,0,0};
-uint8_t ITEstatus2[] = {3,0,0};
+// MT-VIKI Manual Switch variables
+uint8_t ITEstatus[] = {3,2,0};
+uint8_t ITEstatus2[] = {3,2,0};
 bool ITErecv[2] = {0,0};
 bool listenITE[2] = {1,1};
 uint8_t ITEinputnum[2] = {0,0};
@@ -308,7 +308,10 @@ void readExtron1(){
     }
     else if(substringEquals(ecap,0,8,"RECONFIG")){      // This is received everytime a change is made on older Extron Crosspoints
       ReconfigSet[0] = true;
-      ExtronOutputQuery(ExtronVideoOutputPortSW1,1); // Read current input for "ExtronVideoOutputPortSW1" that is connected to port 1 of the DD
+      char cmd[10];
+      snprintf(cmd, sizeof(cmd), "v%d%%", ExtronVideoOutputPortSW1);
+      extronSerial.write(cmd);
+      delay(20);
     }
 #if automatrixSW1
     else if(substringEquals(ecap,amSizeSW1 + 6,amSizeSW1 + 9,"Rpr")){ // detect if a Preset has been used 
@@ -564,7 +567,10 @@ void readExtron2(){
     }
     else if(substringEquals(ecap,0,8,"RECONFIG")){     // This is received everytime a change is made on older Extron Crosspoints
       ReconfigSet[1] = true;
-      ExtronOutputQuery(ExtronVideoOutputPortSW2,2); // Read current input for "ExtronVideoOutputPortSW2" that is connected to port 2 of the DD
+      char cmd[10];
+      snprintf(cmd, sizeof(cmd), "v%d%%", ExtronVideoOutputPortSW2);
+      extronSerial2.write(cmd);
+      delay(20);
     }
 #if automatrixSW2    
     else if(substringEquals(ecap,amSizeSW2 + 6,amSizeSW2 + 9,"Rpr")){ // detect if a Preset has been used 
@@ -853,7 +859,7 @@ void MTVtime1(unsigned long eTime){
     MTVcurrentTime = 0;
     MTVprevTime = 0;
     extronSerialEwrite("viki",currentMTVinput[0],1);
- }
+  }
 }  // end of MTVtime1()
 #endif
 
@@ -866,25 +872,9 @@ void MTVtime2(unsigned long eTime){
     MTVcurrentTime2 = 0;
     MTVprevTime2 = 0;
     extronSerialEwrite("viki",currentMTVinput[1] - 100,2);
- }
+  }
 }  // end of MTVtime2()
 #endif
-
-void ExtronOutputQuery(uint8_t outputNum, uint8_t sw){
-  char cmd[6]; 
-  uint8_t len = 0;
-  cmd[len++] = 'v';
-  char buff[4];
-  itoa(outputNum,buff,10);
-  for(char* p = buff; *p; p++){
-    cmd[len++] = *p;
-  }
-  cmd[len++] = '%';
-  if(sw == 1)
-    extronSerial.write((uint8_t *)cmd,len);
-  else if(sw == 2)
-    extronSerial2.write((uint8_t *)cmd,len);
-} // end of ExtronOutputQuery()
 
 void extronSerialEwrite(const char* type, uint8_t value, uint8_t sw){
   if(substringEquals(type,0,4,"viki")){
