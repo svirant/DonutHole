@@ -54,7 +54,7 @@
 | MT-VIKI 8 port HDMI | yes, confirmed first hand | [Amazon](https://a.co/d/eHo5uKs) link for reference. **Disable MT-VIKI beeping by pressing the "#" button on it's remote.** |
 | Extron RGBHV sw6  | yes, confirmed first hand  | auto-profiles triggered by manual selection or auto-switching |
 | Extron SW4 VGA Ars | yes, confirmed by "Nobody" on the RT4K Discord | auto-profiles triggered by manual selection or auto-switching |
-| Extron DXP 88 | yes, confirmed first hand | Auto-switching can be enabled in "Options" section of .ino.  Works with Presets. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc|
+| Extron DXP 88 | yes, confirmed first hand | Auto-switching can be enabled in "Options" section of .ino.  Works with Presets. On SW1, Preset 1 is S1_ profile. On SW2, Preset 1 is S101_ profile, etc. <br><br>Power up the switch before connecting the DonutHole. |
 | Extron CrossPoint Plus, MVX, etc | yes, confirmed by other users | Auto-switching can be enabled for switches that supports DSVP and are RGBS/HDMI/DVI signal types. By default, works with Presets as shown in the Note above. |
 | Extron CrossPoint E-series  | yes, works with Presets and Input changes | Must set ExtronVideoOutputPortSW1 / SW2 variable to output connected to RT4K |
 
