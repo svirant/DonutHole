@@ -81,6 +81,13 @@ There are plenty of options for PCB manufacturing but I prefer [JLCPCB](https://
 
 [<img width="400" src="./images/3.png" />](https://svirant.github.io/DonutHole/images/ibom.html)
 
+# (2M) baud mod
+<img width="400" src="./images/mod.JPG" /><p>
+ - Replace R1 (10K) with a 2.2K resistor
+ - Remove R2 and bridge pads
+ - Connect Rx and 3.3v with a 2.2K resistor 
+ <br><br>
+
 # PCB
 <img width="400" src="./images/PCB.png">
 
