@@ -82,6 +82,11 @@ There are plenty of options for PCB manufacturing but I prefer [JLCPCB](https://
 [<img width="400" src="./images/3.png" />](https://svirant.github.io/DonutHole/images/ibom.html)
 
 # (2M) baud mod
+- **NOT supported with SVS connected to VGA adapter**
+  - ...unless SDA/SDL trace is cut on VGA Adapter, but that disables the SVS's profile sending.
+  - SVS runs at 9600 baud which conflicts with 2M regardless.
+  - Extra Tx/Rx wire length of VGA cable can also cause issues. Workaround - You can cut SDA/SDL traces on the bottom of the VGA adapter to continue passing video but disables "VGA cable Serial" passthrough. (How the SVS sends profile changes)
+
 <img width="400" src="./images/mod.JPG" /><p>
  - Replace R1 (10K) with a 2.2K resistor
  - Remove R2 and bridge pads
